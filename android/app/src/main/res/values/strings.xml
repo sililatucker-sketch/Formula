@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Formula</string>
+    <string name="title_activity_main">Formula</string>
+    <string name="package_name">app.prv8.formula</string>
+    <string name="custom_url_scheme">app.prv8.formula</string>
+</resources>
