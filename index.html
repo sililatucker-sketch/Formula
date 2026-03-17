@@ -13,6 +13,21 @@
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; overflow: hidden; background: #0a0a0f; -webkit-overflow-scrolling: touch; }
   #root { width: 100%; height: 100%; }
+  @keyframes scorePulse {
+    0%   { transform: scale(1);   color: inherit; }
+    30%  { transform: scale(1.6); color: #22c55e; }
+    100% { transform: scale(1);   color: inherit; }
+  }
+  @keyframes scorePulseRed {
+    0%   { transform: scale(1);   color: inherit; }
+    30%  { transform: scale(1.6); color: #ef4444; }
+    100% { transform: scale(1);   color: inherit; }
+  }
+  @keyframes scorePulseGrey {
+    0%   { transform: scale(1);   color: inherit; }
+    30%  { transform: scale(1.3); color: #9ca3af; }
+    100% { transform: scale(1);   color: inherit; }
+  }
   input, select, button { font-family: inherit; }
   @keyframes pulse { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
 </style>
@@ -586,6 +601,7 @@ function VolleyballStats() {
   const [screen, setScreenRaw] = useState("home");
   const navStackRef = useRef([]);
   const navigate = (s) => {
+    if (s === screen) return; // prevent duplicate pushes
     navStackRef.current.push(screen);
     setScreenRaw(s);
   };
@@ -597,8 +613,17 @@ function VolleyballStats() {
       setScreenRaw("home");
     }
   };
-  // For cases where we need to set screen without pushing history (e.g., room exit)
-  const setScreen = (s) => {
+  const navigateBackTo = (target) => {
+    const idx = navStackRef.current.lastIndexOf(target);
+    if (idx >= 0) {
+      navStackRef.current = navStackRef.current.slice(0, idx);
+    } else {
+      navStackRef.current = [];
+    }
+    setScreenRaw(target);
+  };
+  // For cases where we need to reset navigation entirely (e.g., room exit)
+  const resetNavTo = (s) => {
     navStackRef.current = [];
     setScreenRaw(s);
   };
@@ -640,7 +665,10 @@ function VolleyballStats() {
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [undoStack, setUndoStack] = useState([]);
   const [assistPrompt, setAssistPrompt] = useState(null);
-  const [scoutView, setScoutView] = useState("input");
+  const [scoutView, setScoutView] = useState("input"); // "input", "heatmap", "passing"
+  const [scoutPlayerNum, setScoutPlayerNum] = useState(""); // sticky hitter number
+  const [scoutNumbered, setScoutNumbered] = useState(false); // dot vs number toggle
+  const [scoutFullView, setScoutFullView] = useState(false); // full-page scout view
   const [scoutPending, setScoutPending] = useState(null); // { originZone, outcome } → waiting for landing zone tap
   const [scoutOriginFilter, setScoutOriginFilter] = useState(null); // heatmap filter by origin zone
   const [statsSetView, setStatsSetView] = useState("current"); // "current", "match", or set index
@@ -652,7 +680,19 @@ function VolleyballStats() {
   const [toTimer, setToTimer] = useState({ running: false, seconds: 0, total: 0 });
   const toTimerRef = useRef(null);
   const [showRotationFix, setShowRotationFix] = useState(false); // manual rotation overlay
+  const [scorePulse, setScorePulse] = useState(null); // "us" | "them" | null
+  const scorePulseTimerRef = useRef(null);
+  const [showScoreEdit, setShowScoreEdit] = useState(false);
+  const [editScoreUs, setEditScoreUs] = useState(0);
+  const [editScoreThem, setEditScoreThem] = useState(0);
+  const [showMatchSettings, setShowMatchSettings] = useState(false);
+  const [customPlayToInput, setCustomPlayToInput] = useState("");
   const [activeTeamId, setActiveTeamId] = useState(null); // for team homepage
+  const [tournaments, setTournaments] = useState([]);
+  const [matchTournamentFilter, setMatchTournamentFilter] = useState(null); // tournament ID or null
+  const [showTournamentForm, setShowTournamentForm] = useState(false);
+  const [editingTournament, setEditingTournament] = useState(null);
+  const [tournamentExpanded, setTournamentExpanded] = useState(false);
   const [seasonStatsMode, setSeasonStatsMode] = useState("cumulative"); // "cumulative" or "perSet"
   // Practice mode
   const [practices, setPractices] = useState([]);
@@ -663,6 +703,56 @@ function VolleyballStats() {
   // Track active match to prevent Firebase listener overwrites during live tracking
   const activeMatchRef = useRef(false);
   useEffect(() => { activeMatchRef.current = !!currentMatch; }, [currentMatch]);
+
+  // ── LIVE SESSION PERSISTENCE (Item 3) ──────────────────────
+  const sessionBatchRef = useRef({});
+  const flushTimerRef = useRef(null);
+  const sessionRestoredRef = useRef(false);
+
+  const queueSessionWrite = (partialState) => {
+    if (!roomCode || !currentMatch?.id) return;
+    Object.assign(sessionBatchRef.current, partialState);
+    clearTimeout(flushTimerRef.current);
+    flushTimerRef.current = setTimeout(() => {
+      try {
+        fbDb.ref(`rooms/${roomCode}/liveSession/${currentMatch.id}`).update(sessionBatchRef.current);
+      } catch (e) { console.warn("[liveSession] write error:", e); }
+      sessionBatchRef.current = {};
+    }, 500);
+  };
+
+  // Auto-save match state changes
+  useEffect(() => {
+    if (!currentMatch?.id || screen !== "match") return;
+    if (!sessionRestoredRef.current) return; // don't write during restore
+    queueSessionWrite({ tab, rallyPhase, currentSetIdx, selectedPlayer, assistPrompt: assistPrompt || null });
+  }, [tab, rallyPhase, currentSetIdx, selectedPlayer, assistPrompt, screen, currentMatch?.id]);
+
+  useEffect(() => {
+    if (!currentMatch?.id || screen !== "match") return;
+    if (!sessionRestoredRef.current) return;
+    // Cap undo stack at 50 entries
+    const cappedStack = undoStack.length > 50 ? undoStack.slice(-50) : undoStack;
+    queueSessionWrite({ undoStack: cappedStack, currentRally: currentRally || null, prevRallyPhase: prevRallyPhase || null, prevRally: prevRally || null });
+  }, [undoStack, currentRally, prevRallyPhase, prevRally, screen, currentMatch?.id]);
+
+  // Mark session as ready after initial render (prevents writing defaults during restore)
+  useEffect(() => {
+    if (screen === "match" && currentMatch?.id) {
+      const timer = setTimeout(() => { sessionRestoredRef.current = true; }, 1000);
+      return () => clearTimeout(timer);
+    } else {
+      sessionRestoredRef.current = false;
+    }
+  }, [screen, currentMatch?.id]);
+
+  // Cleanup live session on match end
+  const cleanupLiveSession = () => {
+    if (!roomCode || !currentMatch?.id) return;
+    try { fbDb.ref(`rooms/${roomCode}/liveSession/${currentMatch.id}`).remove(); } catch (e) {}
+    sessionBatchRef.current = {};
+    clearTimeout(flushTimerRef.current);
+  };
 
   // ── FIREBASE DATA NORMALIZATION ──────────────────────
   // Firebase: (1) drops empty arrays entirely ([] → undefined)
@@ -964,6 +1054,16 @@ function VolleyballStats() {
     return () => { teamScoutRef.off('value', handler); };
   }, [roomCode, activeTeamId]);
 
+  // Per-team tournament listener
+  useEffect(() => {
+    if (!roomCode || !activeTeamId) { setTournaments([]); return; }
+    const ref = fbDb.ref(`rooms/${roomCode}/tournaments/${activeTeamId}`);
+    const handler = ref.on('value', (snap) => {
+      setTournaments(fbArr(snap.val()));
+    });
+    return () => { ref.off('value', handler); };
+  }, [roomCode, activeTeamId]);
+
   // Save functions — write to Firebase
   const save = (m) => {
     if (!roomCode) return;
@@ -974,6 +1074,12 @@ function VolleyballStats() {
     setScoutSessions(sessions);
     if (!roomCode || !activeTeamId) return;
     try { fbDb.ref(`rooms/${roomCode}/teamScout/${activeTeamId}`).set(sessions); } catch (e) {}
+  };
+
+  const saveTournaments = (t) => {
+    setTournaments(t);
+    if (!roomCode || !activeTeamId) return;
+    try { fbDb.ref(`rooms/${roomCode}/tournaments/${activeTeamId}`).set(t); } catch (e) {}
   };
 
   const deleteMatch = (matchId) => {
@@ -1029,7 +1135,7 @@ function VolleyballStats() {
     }
     saveTeams(updated);
     setEditingTeam(null);
-    setScreen("home");
+    goBack();
     showToast(`${editingTeam.name} saved!`);
   };
 
@@ -1144,6 +1250,14 @@ function VolleyballStats() {
   const getPlayerById = (id) => {
     if (!currentMatch) return null;
     return ((currentMatch.roster||[])).find((p) => p.id === id);
+  };
+
+  const displayName = (player) => {
+    if (!player) return "???";
+    const first = player.name?.split(" ")[0] || player.pName?.split(" ")[0];
+    const num = player.number || player.num || player.pNum;
+    if (first) return first;
+    return num ? `#${num}` : "???";
   };
 
   // Get effective position: check match overrides first, then roster position
@@ -1340,6 +1454,12 @@ function VolleyballStats() {
       }
       return newSet;
     });
+    // Score pulse animation (gated behind score edit modal)
+    if (!showScoreEdit) {
+      clearTimeout(scorePulseTimerRef.current);
+      setScorePulse(forUs ? "us" : "them");
+      scorePulseTimerRef.current = setTimeout(() => setScorePulse(null), 600);
+    }
   };
 
   const recordEvent = (playerId, stat, extra = {}) => {
@@ -1459,7 +1579,14 @@ function VolleyballStats() {
     // Clear any UI state that might be stale
     setAssistPrompt(null);
     setSelectedPlayer(null);
-    
+
+    // Undo pulse (grey) if this was a scoring event
+    if (last._undoScore) {
+      clearTimeout(scorePulseTimerRef.current);
+      setScorePulse("undo");
+      scorePulseTimerRef.current = setTimeout(() => setScorePulse(null), 600);
+    }
+
     setUndoStack((prev) => prev.slice(0, -1));
     showToast("↩ Undone");
   };
@@ -1519,11 +1646,11 @@ function VolleyballStats() {
         });
         return updated;
       });
+      cleanupLiveSession();
       navigate("matchComplete");
     } else {
-      // More sets to play — go to new set setup
-      setSetupStep("lineup");
-      navigate("setup");
+      // More sets to play — show set summary first
+      navigate("setSummary");
     }
   };
 
@@ -1549,6 +1676,7 @@ function VolleyballStats() {
     setRallyPhase("idle");
     setCurrentRally(null);
     setUndoStack([]);
+    cleanupLiveSession();
     navigate("matchComplete");
   };
 
@@ -1682,7 +1810,7 @@ function VolleyballStats() {
     const setNum = setData?.number || 1;
     const format = currentMatch?.format || 3;
     const decidingSetNum = format === 5 ? 5 : 3;
-    const baseTarget = setNum >= decidingSetNum ? 15 : 25;
+    const baseTarget = setData?.playTo || (setNum >= decidingSetNum ? 15 : 25);
     const ourScore = setData?.ourScore || 0;
     const theirScore = setData?.theirScore || 0;
     const maxScore = Math.max(ourScore, theirScore);
@@ -1725,8 +1853,8 @@ function VolleyballStats() {
     let rec = "";
     if (ratio >= 2) rec = "Serving is a weapon. Keep the pressure on.";
     else if (ratio >= 1) rec = "Serving net positive. Stay aggressive.";
-    else if (ratio >= 0.5) rec = "Errors outpacing aces. Consider backing off.";
-    else rec = "Too many errors. Prioritize getting serves in.";
+    else if (ratio >= 0.5) rec = "Errors outpacing aces. Shifting to placement could improve the margin.";
+    else rec = "High error rate. Prioritizing serve accuracy will stabilize the rotation.";
     return { ratio, aces, errors, net, recommendation: rec };
   };
 
@@ -1747,6 +1875,56 @@ function VolleyballStats() {
       for (const ev of (s.events || [])) allEvents.push(ev);
     }
     return calculatePlayerImpact(allEvents, playerId, mult);
+  };
+
+  const generateSuggestions = (setData, matchData, rosterArr) => {
+    const st = {};
+    for (const ev of (setData?.events || [])) {
+      if (ev.stat === "serve_in") continue;
+      st[ev.stat] = (st[ev.stat] || 0) + 1;
+    }
+    const att = (st.kill||0)+(st.attack_error||0)+(st.attack_blocked||0);
+    const kPct = att > 0 ? ((st.kill||0)-(st.attack_error||0)-(st.attack_blocked||0))/att : 0;
+    const topH = rosterArr.map((p) => {
+      const ps = getPlayerSetStats(p.id, setData);
+      const a = (ps.kill||0)+(ps.attack_error||0)+(ps.attack_blocked||0);
+      return { name: p.name?.split(" ")[0]||`#${p.number}`, id: p.id, k: ps.kill||0, e: ps.attack_error||0, att: a, pct: a > 0 ? ((ps.kill||0)-(ps.attack_error||0)-(ps.attack_blocked||0))/a : null };
+    }).filter((h) => h.att > 0).sort((a,b) => b.k - a.k).slice(0, 4);
+    const mult = getFormulaMultipliers();
+    const playerPIRs = rosterArr.map((p) => {
+      const impact = calculatePlayerImpact(setData?.events || [], p.id, mult);
+      const ps = getPlayerSetStats(p.id, setData);
+      const totalActions = Object.values(ps).reduce((s, v) => s + v, 0);
+      return { id: p.id, name: p.name?.split(" ")[0]||`#${p.number}`, pir: impact.total, breakdown: impact.breakdown, actions: totalActions };
+    }).filter(p => p.actions > 0).sort((a, b) => b.pir - a.pir);
+    const bestPlayer = playerPIRs.length > 0 ? playerPIRs[0] : null;
+    const worstPlayer = playerPIRs.length > 1 ? playerPIRs[playerPIRs.length - 1] : null;
+    const fa = formulaAnalysis;
+    const currentVars = setData ? computeFormulaRow(setData) : {};
+    const sug = [];
+    const scoreDiff = (setData?.ourScore || 0) - (setData?.theirScore || 0);
+    const matchSetsWon = ((matchData?.sets||[])).filter((s) => s.complete && s.ourScore > s.theirScore).length;
+    const matchSetsLost = ((matchData?.sets||[])).filter((s) => s.complete && s.ourScore < s.theirScore).length;
+    if (fa.hasEnoughData) {
+      const highImpact = fa.variables.filter(v => v.priorityZone === "high_impact");
+      const onTarget = fa.variables.filter(v => v.priorityZone === "on_target");
+      if (highImpact.length > 0) { const top = highImpact[0]; const curr = currentVars[top.name]; const isBelow = top.name === "reception_error_rate" ? curr > top.threshold : curr < top.threshold; if (isBelow) sug.push(`${top.displayName} is below your winning threshold of ${top.format(top.threshold)} — this is your top priority.`); }
+      if (onTarget.length > 0) { const best = onTarget[0]; const curr = currentVars[best.name]; const isAbove = best.name === "reception_error_rate" ? curr < best.threshold : curr > best.threshold; if (isAbove) sug.push(`${best.displayName} is above target — keep riding this strength.`); }
+    }
+    if (kPct < 0.10 && att > 5) sug.push("Attack efficiency below .100 — try working middles and quicks to create better pin angles.");
+    else if (kPct < 0.20 && att > 5) sug.push("Hitting below .200 — spreading the offense can pull their block and open lanes.");
+    if ((st.serve_error||0) > (st.ace||0) + 1) sug.push("Serve errors exceed aces — shifting to placement-first serving could flip this margin.");
+    if ((st.ball_error||0) >= 3) sug.push(`${st.ball_error} ball handling errors — focusing on clean first contacts will tighten the system.`);
+    if (bestPlayer && bestPlayer.pir > 0 && bestPlayer.actions >= 3) sug.push(`🔥 ${bestPlayer.name} leading the way at +${bestPlayer.pir.toFixed(2)} — look to keep getting them touches.`);
+    if (worstPlayer && worstPlayer.pir < -0.5 && worstPlayer.actions >= 3) sug.push(`⚠️ ${worstPlayer.name} at ${worstPlayer.pir.toFixed(2)} PIR — consider a role adjustment or a breather.`);
+    const hot = topH.find((h) => h.pct !== null && h.pct > 0.3 && h.att >= 3 && (!bestPlayer || h.id !== bestPlayer.id));
+    if (hot) sug.push(`${hot.name} hitting .${Math.round(hot.pct*1000).toString().padStart(3,"0")} — keep running plays through them.`);
+    const cold = topH.find((h) => h.pct !== null && h.pct < 0 && h.att >= 3 && (!worstPlayer || h.id !== worstPlayer.id));
+    if (cold) sug.push(`${cold.name} at negative efficiency (${cold.k}K/${cold.e}E) — consider redirecting sets to balance the attack.`);
+    if ((st.dig||0) < 3 && (setData?.theirScore||0) >= 10) sug.push("Low dig count — reviewing defensive base positions could create more touches.");
+    if ((st.stuff_block||0) === 0 && (setData?.theirScore||0) >= 10) sug.push("No stuff blocks yet — consider adjusting block assignments or closing the seam.");
+    if (sug.length === 0) sug.push("Keep tracking — every stat builds the picture.");
+    return sug;
   };
 
   const getPlayerSetPIS = (playerId, setData) => {
@@ -1873,7 +2051,7 @@ function VolleyballStats() {
             <img src={LOGO_ICON} alt="Formula" style={{ width: 30, height: 30, borderRadius: 6 }} />
           </div>
           <button style={{ background: "#111118", border: "1px solid #1e1e28", borderRadius: 8, color: "#007bff", padding: "6px 12px", fontSize: 11, fontWeight: 700, letterSpacing: 2, cursor: "pointer" }}
-            onClick={() => { setRoomCode(null); setLoaded(false); setMatches([]); setSavedTeams([]); setScoutSessions([]); setPractices([]); setCurrentMatch(null); setScreen("home"); setActiveTeamId(null); setRoomInput(""); }}>
+            onClick={() => { setRoomCode(null); setLoaded(false); setMatches([]); setSavedTeams([]); setScoutSessions([]); setPractices([]); setCurrentMatch(null); resetNavTo("home"); setActiveTeamId(null); setRoomInput(""); }}>
             {roomCode}
           </button>
         </div>
@@ -1911,7 +2089,7 @@ function VolleyballStats() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                       {((team.players||[])).filter((p) => p.number).slice(0, 6).map((p, i) => (
-                        <span key={i} style={S.rosterChip}>#{p.number}</span>
+                        <span key={i} style={S.rosterChip}>{displayName(p)}</span>
                       ))}
                       {playerCount > 6 && <span style={{ ...S.rosterChip, opacity: 0.4 }}>+{playerCount - 6}</span>}
                     </div>
@@ -1934,7 +2112,7 @@ function VolleyballStats() {
   // ── TEAM HOMEPAGE SCREEN ────────────────────────────
   if (screen === "teamHome" && activeTeamId) {
     const team = savedTeams.find((t) => t.id === activeTeamId);
-    if (!team) { console.log("[Debug] Team not found, id:", activeTeamId, "savedTeams:", savedTeams.map(t => t.id)); setScreen("home"); return null; }
+    if (!team) { console.log("[Debug] Team not found, id:", activeTeamId, "savedTeams:", savedTeams.map(t => t.id)); resetNavTo("home"); return null; }
     const teamMatches = matches.filter((m) => m.teamId === team.id);
     const teamPractices = practices.filter((p) => p.teamId === team.id);
     const rosterP = (team.players || []).filter((p) => p.number);
@@ -1965,6 +2143,7 @@ function VolleyballStats() {
     }
     const playerSeasonStats = {};
     const playerSetCount = {}; // canonical key → number of sets player appeared in
+    const playerSeasonPassing = {}; // canonical key → { total, qualitySum }
     for (const m of teamMatches) {
       for (const s of (m.sets || [])) {
         const playersInSet = new Set();
@@ -1977,6 +2156,11 @@ function VolleyballStats() {
           if (!playerSeasonStats[key]) playerSeasonStats[key] = {};
           playerSeasonStats[key][ev.stat] = (playerSeasonStats[key][ev.stat] || 0) + 1;
           playersInSet.add(key);
+          if (ev.stat === "reception" && ev.quality !== undefined) {
+            if (!playerSeasonPassing[key]) playerSeasonPassing[key] = { total: 0, qualitySum: 0 };
+            playerSeasonPassing[key].total++;
+            playerSeasonPassing[key].qualitySum += ev.quality;
+          }
         }
         for (const key of playersInSet) {
           playerSetCount[key] = (playerSetCount[key] || 0) + 1;
@@ -2225,7 +2409,7 @@ function VolleyballStats() {
                       <th style={S.sth}>SA</th>
                       <th style={S.sth}>SE</th>
                       <th style={S.sth}>DIG</th>
-                      <th style={S.sth}>CV</th>
+                      <th style={S.sth}>PASS</th>
                       <th style={S.sth}>BS</th>
                       <th style={S.sth}>BE</th>
                       {seasonStatsMode === "perSet" && <th style={S.sth}>S</th>}
@@ -2245,7 +2429,7 @@ function VolleyballStats() {
                         const pis = (seasonPIS[canonKey]?.total || 0) / d;
                         return { pid: canonKey, pName, pNum, k, e, att: att / d, pct, pis, 
                           a: (stats.assist || 0) / d, sa: (stats.ace || 0) / d, se: (stats.serve_error || 0) / d, 
-                          dig: (stats.dig || 0) / d, cvr: (stats.cvr || 0) / d, bs: (stats.stuff_block || 0) / d, 
+                          dig: ((stats.dig || 0) + (stats.cvr || 0)) / d, bs: (stats.stuff_block || 0) / d,
                           be: (stats.ball_error || 0) / d, sets };
                       })
                       .sort((a, b) => b.pis - a.pis)
@@ -2266,7 +2450,7 @@ function VolleyballStats() {
                           <td style={S.std}>{fmt(p.sa)}</td>
                           <td style={S.std}>{fmt(p.se)}</td>
                           <td style={S.std}>{fmt(p.dig)}</td>
-                          <td style={{ ...S.std, color: "#60a5fa" }}>{fmt(p.cvr)}</td>
+                          {(() => { const passing = playerSeasonPassing[p.pid]; const passAvg = passing && passing.total > 0 ? passing.qualitySum / passing.total : null; return <td style={{ ...S.std, color: passAvg !== null ? (passAvg >= 2.0 ? "#22c55e" : passAvg >= 1.5 ? "#007bff" : "#ef4444") : "#6b7280" }}>{passAvg !== null ? passAvg.toFixed(2) : "—"}</td>; })()}
                           <td style={S.std}>{fmt(p.bs)}</td>
                           <td style={{ ...S.std, color: p.be > 0 ? "#ef4444" : "#6b7280" }}>{fmt(p.be)}</td>
                           {isAvg && <td style={{ ...S.std, opacity: 0.4 }}>{p.sets}</td>}
@@ -2291,7 +2475,7 @@ function VolleyballStats() {
                 onChange={(e) => setScoutNameInput(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && scoutNameInput.trim()) {
-                    const session = { id: Date.now().toString(), name: scoutNameInput.trim(), shots: [], created: new Date().toISOString().split("T")[0], teamId: activeTeamId };
+                    const session = { id: Date.now().toString(), name: scoutNameInput.trim(), shots: [], passingGrades: [], created: new Date().toISOString().split("T")[0], teamId: activeTeamId };
                     setCurrentScout(session);
                     setScoutView("input");
                     setScoutPending(null);
@@ -2302,7 +2486,7 @@ function VolleyballStats() {
               />
               <button style={S.addTeamBtn} onClick={() => {
                 if (!scoutNameInput.trim()) { showToast("Enter opponent name"); return; }
-                const session = { id: Date.now().toString(), name: scoutNameInput.trim(), shots: [], created: new Date().toISOString().split("T")[0], teamId: activeTeamId };
+                const session = { id: Date.now().toString(), name: scoutNameInput.trim(), shots: [], passingGrades: [], created: new Date().toISOString().split("T")[0], teamId: activeTeamId };
                 setCurrentScout(session);
                 setScoutView("input");
                 setScoutPending(null);
@@ -2341,12 +2525,84 @@ function VolleyballStats() {
             })}
           </div>
 
+          {/* TOURNAMENTS */}
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}
+              onClick={() => setTournamentExpanded(!tournamentExpanded)}>
+              <h3 style={{ ...S.sectionTitle, margin: 0 }}>Tournaments {tournamentExpanded ? "▾" : "▸"}</h3>
+              {tournamentExpanded && <button style={{ background: "#007bff", color: "#fff", border: "none", borderRadius: 6, padding: "4px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                onClick={(e) => { e.stopPropagation(); setEditingTournament(null); setShowTournamentForm(true); }}>+ New</button>}
+            </div>
+            {tournamentExpanded && (
+              <div style={{ marginTop: 8 }}>
+                {showTournamentForm && (() => {
+                  const isEdit = !!editingTournament;
+                  const [tName, setTName] = React.useState(isEdit ? editingTournament.name : "");
+                  const [tStart, setTStart] = React.useState(isEdit ? editingTournament.startDate || "" : "");
+                  const [tEnd, setTEnd] = React.useState(isEdit ? editingTournament.endDate || "" : "");
+                  const [tLoc, setTLoc] = React.useState(isEdit ? editingTournament.location || "" : "");
+                  return (
+                    <div style={{ ...S.card, marginBottom: 8, padding: 12 }}>
+                      <input style={S.input} placeholder="Tournament name *" value={tName} onChange={e => setTName(e.target.value)} />
+                      <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                        <input style={{ ...S.input, flex: 1 }} type="date" placeholder="Start" value={tStart} onChange={e => setTStart(e.target.value)} />
+                        <input style={{ ...S.input, flex: 1 }} type="date" placeholder="End" value={tEnd} onChange={e => setTEnd(e.target.value)} />
+                      </div>
+                      <input style={{ ...S.input, marginTop: 6 }} placeholder="Location (optional)" value={tLoc} onChange={e => setTLoc(e.target.value)} />
+                      <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                        <button style={{ ...S.primaryBtn, flex: 1, fontSize: 12 }} onClick={() => {
+                          if (!tName.trim()) return;
+                          if (isEdit) {
+                            const updated = tournaments.map(t => t.id === editingTournament.id ? { ...t, name: tName.trim(), startDate: tStart, endDate: tEnd, location: tLoc.trim() } : t);
+                            saveTournaments(updated);
+                          } else {
+                            saveTournaments([...tournaments, { id: Date.now().toString(), name: tName.trim(), startDate: tStart, endDate: tEnd, location: tLoc.trim(), teamId: activeTeamId, created: new Date().toISOString().split("T")[0] }]);
+                          }
+                          setShowTournamentForm(false); setEditingTournament(null);
+                        }}>{isEdit ? "Save" : "Create"}</button>
+                        <button style={{ ...S.dangerBtn, flex: 1, fontSize: 12 }} onClick={() => { setShowTournamentForm(false); setEditingTournament(null); }}>Cancel</button>
+                      </div>
+                    </div>
+                  );
+                })()}
+                {tournaments.length === 0 && !showTournamentForm && <div style={{ textAlign: "center", padding: 12, opacity: 0.4, fontSize: 12 }}>No tournaments yet</div>}
+                {tournaments.map(t => {
+                  const tMatchCount = teamMatches.filter(m => m.tournamentId === t.id).length;
+                  return (
+                    <div key={t.id} style={{ ...S.card, marginBottom: 6, padding: "8px 12px", display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, fontSize: 13 }}>{t.name}</div>
+                        <div style={{ fontSize: 10, opacity: 0.4 }}>
+                          {t.startDate && t.endDate ? `${t.startDate} — ${t.endDate}` : t.startDate || ""}
+                          {t.location ? ` · ${t.location}` : ""}
+                          {` · ${tMatchCount} match${tMatchCount !== 1 ? "es" : ""}`}
+                        </div>
+                      </div>
+                      <button style={{ background: "none", border: "none", color: "#007bff", fontSize: 11, cursor: "pointer" }}
+                        onClick={() => { setEditingTournament(t); setShowTournamentForm(true); }}>Edit</button>
+                      <button style={{ background: "none", border: "none", color: "#ef4444", fontSize: 14, cursor: "pointer", opacity: 0.5 }}
+                        onClick={() => { if (confirm(`Delete tournament "${t.name}"?`)) saveTournaments(tournaments.filter(x => x.id !== t.id)); }}>✕</button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           {/* RECENT MATCHES */}
           <h3 style={S.sectionTitle}>Match History</h3>
-          {teamMatches.length === 0 ? (
+          {tournaments.length > 0 && (
+            <select style={{ ...S.input, marginBottom: 8, fontSize: 12 }} value={matchTournamentFilter || ""} onChange={e => setMatchTournamentFilter(e.target.value || null)}>
+              <option value="">All Matches</option>
+              {tournaments.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          )}
+          {(() => {
+            const displayMatches = matchTournamentFilter ? teamMatches.filter(m => m.tournamentId === matchTournamentFilter) : teamMatches;
+            return displayMatches.length === 0 ? (
             <div style={{ textAlign: "center", padding: 20, opacity: 0.4, fontSize: 13 }}>No matches yet</div>
           ) : (
-            teamMatches.slice().reverse().map((m) => {
+            displayMatches.slice().reverse().map((m) => {
               const setScores = ((m.sets||[])).map((s) => `${s.ourScore}-${s.theirScore}`).join(", ");
               const won = ((m.sets||[])).filter((s) => s.complete && s.ourScore > s.theirScore).length;
               const lost = ((m.sets||[])).filter((s) => s.complete && s.ourScore < s.theirScore).length;
@@ -2436,7 +2692,36 @@ function VolleyballStats() {
                       if (isComplete) {
                         navigate("matchComplete");
                       } else {
-                        setTab("court");
+                        // Restore live session state if available
+                        if (roomCode && repairedMatch.id) {
+                          fbDb.ref(`rooms/${roomCode}/liveSession/${repairedMatch.id}`).once('value', (snap) => {
+                            const ls = snap.val();
+                            if (ls) {
+                              if (ls.tab) setTab(ls.tab);
+                              else setTab("court");
+                              if (ls.rallyPhase) setRallyPhase(ls.rallyPhase);
+                              if (ls.currentSetIdx !== undefined) {
+                                const maxIdx = Math.max(0, (repairedMatch.sets || []).length - 1);
+                                setCurrentSetIdx(Math.min(ls.currentSetIdx, maxIdx));
+                              }
+                              if (ls.selectedPlayer) {
+                                const resumeSet2 = repairedMatch.sets?.[ls.currentSetIdx || setIdx];
+                                const lineupIds = new Set(Object.values(resumeSet2?.currentLineup || {}));
+                                setSelectedPlayer(lineupIds.has(ls.selectedPlayer) ? ls.selectedPlayer : null);
+                              }
+                              if (ls.undoStack && Array.isArray(ls.undoStack)) setUndoStack(ls.undoStack.slice(-50));
+                              if (ls.currentRally) setCurrentRally(ls.currentRally);
+                              if (ls.prevRallyPhase) setPrevRallyPhase(ls.prevRallyPhase);
+                              if (ls.prevRally) setPrevRally(ls.prevRally);
+                              if (ls.assistPrompt) setAssistPrompt(ls.assistPrompt);
+                              console.log("[liveSession] Restored session state for match:", repairedMatch.id);
+                            } else {
+                              setTab("court");
+                            }
+                          });
+                        } else {
+                          setTab("court");
+                        }
                         navigate("match");
                       }
                     }}>
@@ -2445,6 +2730,8 @@ function VolleyballStats() {
                         <span style={{ fontWeight: 700, fontSize: 14 }}>vs {m.opponent || "\u2014"}</span>
                         {!isComplete && <span style={{ fontSize: 9, fontWeight: 800, color: "#007bff", marginLeft: 6, padding: "1px 5px", border: "1px solid #007bff", borderRadius: 4 }}>LIVE</span>}
                         <span style={{ fontSize: 11, opacity: 0.4, marginLeft: 8 }}>{m.date}</span>
+                        {m.tournamentId && (() => { const t = tournaments.find(x => x.id === m.tournamentId); return t ? <span style={{ fontSize: 9, opacity: 0.5, display: "block", marginTop: 2 }}>{t.name}</span> : null; })()}
+                        {!m.tournamentId && m.tournament && <span style={{ fontSize: 9, opacity: 0.5, display: "block", marginTop: 2 }}>{m.tournament}</span>}
                       </div>
                       <div style={{ textAlign: "right" }}>
                         <div style={{ fontWeight: 800, color: won > lost ? "#22c55e" : won < lost ? "#ef4444" : "#007bff" }}>
@@ -2462,7 +2749,8 @@ function VolleyballStats() {
                 </div>
               );
             })
-          )}
+          );
+          })()}
 
           {/* Practice history */}
           {teamPractices.length > 0 && (
@@ -2643,7 +2931,7 @@ function VolleyballStats() {
           <button style={{ ...S.backBtn, fontSize: 11, fontWeight: 800, letterSpacing: 1 }} onClick={() => {
             setCurrentMatch(null);
             setCurrentSetIdx(0);
-            setScreen("teamHome");
+            navigateBackTo("teamHome");
           }}>HOME</button>
           <h1 style={S.headerTitle}>Match Complete</h1>
         </div>
@@ -2680,10 +2968,10 @@ function VolleyballStats() {
               { key: "passing", label: "PAS", color: "#eab308" },
               { key: "blocking", label: "BLK", color: "#a855f7" },
               { key: "defense", label: "DEF", color: "#60a5fa" },
-              { key: "cover", label: "CVR", color: "#14b8a6" },
               { key: "setting", label: "SET", color: "#f472b6" },
             ];
-            const maxAbs = Math.max(1, ...Object.values(mvpPisObj.breakdown).map(Math.abs));
+            const mergedBreakdown = { ...mvpPisObj.breakdown, defense: (mvpPisObj.breakdown.defense || 0) + (mvpPisObj.breakdown.cover || 0) };
+            const maxAbs = Math.max(1, ...cats.map(c => Math.abs(mergedBreakdown[c.key] || 0)));
             return (
             <div style={{ ...S.card, padding: 16, marginBottom: 16, borderLeft: "4px solid #007bff" }}>
               <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, opacity: 0.4, marginBottom: 6 }}>MATCH MVP</div>
@@ -2703,15 +2991,14 @@ function VolleyballStats() {
                 {mvpStats.kill > 0 && <span style={{ fontSize: 11, color: "#22c55e", fontWeight: 700 }}>{mvpStats.kill}K</span>}
                 {mvpStats.ace > 0 && <span style={{ fontSize: 11, color: "#007bff", fontWeight: 700 }}>{mvpStats.ace}A</span>}
                 {mvpStats.stuff_block > 0 && <span style={{ fontSize: 11, color: "#22c55e", fontWeight: 700 }}>{mvpStats.stuff_block}SB</span>}
-                {mvpStats.dig > 0 && <span style={{ fontSize: 11, fontWeight: 700 }}>{mvpStats.dig}D</span>}
-                {mvpStats.cvr > 0 && <span style={{ fontSize: 11, color: "#14b8a6", fontWeight: 700 }}>{mvpStats.cvr}CV</span>}
+                {((mvpStats.dig || 0) + (mvpStats.cvr || 0)) > 0 && <span style={{ fontSize: 11, fontWeight: 700 }}>{(mvpStats.dig || 0) + (mvpStats.cvr || 0)}D</span>}
                 {mvpStats.assist > 0 && <span style={{ fontSize: 11, color: "#5ba3ff", fontWeight: 700 }}>{mvpStats.assist}AS</span>}
                 {mvpStats.block > 0 && <span style={{ fontSize: 11, fontWeight: 700 }}>{mvpStats.block}BT</span>}
               </div>
               {/* Category breakdown bars */}
               <div style={{ display: "flex", gap: 2, height: 8, marginTop: 8 }}>
                 {cats.map(c => {
-                  const val = mvpPisObj.breakdown[c.key] || 0;
+                  const val = mergedBreakdown[c.key] || 0;
                   if (val === 0) return null;
                   const w = Math.max(4, Math.abs(val) / maxAbs * 100);
                   return <div key={c.key} style={{ height: "100%", borderRadius: 2, width: `${w}%`, background: val > 0 ? c.color : "#ef4444", opacity: 0.7 }} />;
@@ -2719,7 +3006,7 @@ function VolleyballStats() {
               </div>
               <div style={{ display: "flex", gap: 6, marginTop: 3 }}>
                 {cats.map(c => {
-                  const val = mvpPisObj.breakdown[c.key] || 0;
+                  const val = mergedBreakdown[c.key] || 0;
                   if (val === 0) return null;
                   return <span key={c.key} style={{ fontSize: 8, color: c.color, opacity: 0.5 }}>{c.label} {val > 0 ? "+" : ""}{val.toFixed(1)}</span>;
                 })}
@@ -2841,7 +3128,7 @@ function VolleyballStats() {
                 const { player: p, pis } = r;
                 return (
                   <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: "1px solid #1a1a24" }}>
-                    <span style={{ fontWeight: 700, fontSize: 12 }}>#{p.number} {p.name?.split(" ")[0]}</span>
+                    <span style={{ fontWeight: 700, fontSize: 12 }}>{displayName(p)} <span style={{ opacity: 0.5, fontSize: 10 }}>#{p.number}</span></span>
                     <span style={{ fontWeight: 800, fontSize: 13, color: pis.total > 0 ? "#22c55e" : pis.total < 0 ? "#ef4444" : "#6b7280" }}>
                       {pis.total > 0 ? "+" : ""}{pis.total.toFixed(1)}
                     </span>
@@ -2861,6 +3148,112 @@ function VolleyballStats() {
             navigate("teamHome");
           }}>
             Back to Team
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "setSummary") {
+    const summarySet = currentMatch?.sets?.[currentSetIdx];
+    const weWonSet = summarySet && summarySet.ourScore > summarySet.theirScore;
+    const rosterPlayers = ((currentMatch?.roster||[])).filter((p) => p.number);
+    const completedSets = (currentMatch?.sets || []).filter((s) => s.complete);
+    const matchSetsWon = completedSets.filter((s) => s.ourScore > s.theirScore).length;
+    const matchSetsLost = completedSets.filter((s) => s.ourScore < s.theirScore).length;
+    const matchStatus = matchSetsWon > matchSetsLost ? `Leading ${matchSetsWon}-${matchSetsLost}` : matchSetsLost > matchSetsWon ? `Trailing ${matchSetsWon}-${matchSetsLost}` : `Tied ${matchSetsWon}-${matchSetsLost}`;
+
+    // Key stats from this set
+    const setSt = {};
+    for (const ev of (summarySet?.events || [])) { if (ev.stat !== "serve_in") setSt[ev.stat] = (setSt[ev.stat] || 0) + 1; }
+    const sAtt = (setSt.kill||0)+(setSt.attack_error||0)+(setSt.attack_blocked||0);
+    const sHitPct = sAtt > 0 ? ((setSt.kill||0)-(setSt.attack_error||0)-(setSt.attack_blocked||0))/sAtt : null;
+
+    // Top 3 PIR
+    const sMult = getFormulaMultipliers();
+    const sPIRs = rosterPlayers.map(p => {
+      const impact = calculatePlayerImpact(summarySet?.events || [], p.id, sMult);
+      return { player: p, pir: impact.total, breakdown: impact.breakdown };
+    }).filter(r => r.pir !== 0 || Object.values(r.breakdown).some(v => v !== 0)).sort((a, b) => b.pir - a.pir).slice(0, 3);
+
+    // Suggestions for next set
+    const setSuggestions = generateSuggestions(summarySet, currentMatch, rosterPlayers);
+
+    return (
+      <div style={S.container}>
+        <div style={S.header}>
+          <h1 style={S.headerTitle}>Set {summarySet?.number || currentSetIdx + 1} Summary</h1>
+        </div>
+        <div style={S.pad}>
+          {/* Result banner */}
+          <div style={{
+            ...S.card, textAlign: "center", padding: 20, marginBottom: 12,
+            borderLeft: `4px solid ${weWonSet ? "#22c55e" : "#ef4444"}`,
+          }}>
+            <div style={{ fontSize: 32, fontWeight: 900, color: weWonSet ? "#22c55e" : "#ef4444" }}>
+              {weWonSet ? "SET WON" : "SET LOST"}
+            </div>
+            <div style={{ fontSize: 24, fontWeight: 800, margin: "6px 0" }}>
+              {summarySet?.ourScore || 0} - {summarySet?.theirScore || 0}
+            </div>
+            <div style={{ fontSize: 13, opacity: 0.5 }}>{matchStatus}</div>
+          </div>
+
+          {/* Key Stats */}
+          <div style={S.card}>
+            <h3 style={S.cardTitle}>KEY STATS</h3>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8, padding: "8px 0" }}>
+              {[
+                { label: "Kills", val: setSt.kill || 0, color: "#22c55e" },
+                { label: "Errors", val: (setSt.attack_error||0)+(setSt.ball_error||0)+(setSt.serve_error||0), color: "#ef4444" },
+                { label: "Hit%", val: sHitPct !== null ? (sHitPct >= 0 ? "." : "-.") + Math.abs(Math.round(sHitPct*1000)).toString().padStart(3,"0") : "—", color: sHitPct !== null && sHitPct >= 0.2 ? "#22c55e" : sHitPct !== null && sHitPct >= 0 ? "#fff" : "#ef4444" },
+                { label: "Aces", val: setSt.ace || 0, color: "#007bff" },
+                { label: "SE", val: setSt.serve_error || 0, color: "#ef4444" },
+                { label: "Digs", val: (setSt.dig||0) + (setSt.cvr||0), color: "#fff" },
+                { label: "Blocks", val: setSt.stuff_block || 0, color: "#a855f7" },
+                { label: "Assists", val: setSt.assist || 0, color: "#5ba3ff" },
+              ].map(s => (
+                <div key={s.label} style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: s.color }}>{s.val}</div>
+                  <div style={{ fontSize: 9, opacity: 0.5 }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Top 3 PIR */}
+          {sPIRs.length > 0 && (
+            <div style={S.card}>
+              <h3 style={S.cardTitle}>TOP PERFORMERS</h3>
+              {sPIRs.map((r, i) => (
+                <div key={r.player.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: i < sPIRs.length - 1 ? "1px solid #1a1a24" : "none" }}>
+                  <div>
+                    <span style={{ fontWeight: 700, fontSize: 13 }}>{displayName(r.player)}</span>
+                    <span style={{ opacity: 0.4, fontSize: 10, marginLeft: 4 }}>#{r.player.number}</span>
+                  </div>
+                  <span style={{ fontWeight: 800, fontSize: 15, color: r.pir > 0 ? "#22c55e" : r.pir < 0 ? "#ef4444" : "#6b7280" }}>
+                    {r.pir > 0 ? "+" : ""}{r.pir.toFixed(1)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* AI Suggestions for next set */}
+          {setSuggestions.length > 0 && (
+            <div style={S.card}>
+              <h3 style={S.cardTitle}>ADJUSTMENTS FOR NEXT SET</h3>
+              {setSuggestions.map((s, i) => (
+                <div key={i} style={{ fontSize: 12, padding: "5px 0", borderBottom: i < setSuggestions.length - 1 ? "1px solid #1a1a24" : "none", lineHeight: 1.4 }}>
+                  {s}
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button style={{ ...S.primaryBtn, width: "100%", padding: "14px 0", fontSize: 15, fontWeight: 800, marginTop: 12 }}
+            onClick={() => { setSetupStep("lineup"); navigate("setup"); }}>
+            Set Up Next Set →
           </button>
         </div>
       </div>
@@ -3203,6 +3596,17 @@ function VolleyballStats() {
               </button>
             </div>
 
+            {/* Tournament Assignment */}
+            {tournaments.length > 0 && (
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, opacity: 0.5, marginBottom: 4 }}>TOURNAMENT</div>
+                <select style={{ ...S.input, fontSize: 13 }} value={currentMatch?.tournamentId || ""} onChange={e => setCurrentMatch(p => ({ ...p, tournamentId: e.target.value || null }))}>
+                  <option value="">No Tournament</option>
+                  {tournaments.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </div>
+            )}
+
             {/* Serve or Receive */}
             <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
               <button style={{ ...S.optionBtn, ...(weServeFirst ? S.optionBtnActive : {}) }}
@@ -3383,6 +3787,7 @@ function VolleyballStats() {
         x: Math.round(x * 10) / 10,
         y: Math.round(y * 10) / 10,
         timestamp: Date.now(),
+        playerNumber: scoutPlayerNum || null,
       };
       const updated = { ...currentScout, shots: [...shots, shot] };
       setCurrentScout(updated);
@@ -3414,7 +3819,7 @@ function VolleyballStats() {
     const filteredShots = scoutOriginFilter !== null ? shots.filter((s) => s.originZone === scoutOriginFilter) : shots;
 
     const outcomeColor = { kill: "#ef4444", dug: "#007bff", error: "#3b82f6" };
-    const COURT_H = 200;
+    const COURT_H = scoutFullView ? 400 : 200;
 
     const courtSvg = (shotList, interactive) => {
       const W = 300, H = COURT_H;
@@ -3508,10 +3913,16 @@ function VolleyballStats() {
             <line x1={PAD + 100} y1={PAD} x2={PAD + 100} y2={PAD + H} stroke={interactive ? "#1a1a24" : "#ffffff15"} strokeWidth="0.5" />
             <line x1={PAD + 200} y1={PAD} x2={PAD + 200} y2={PAD + H} stroke={interactive ? "#1a1a24" : "#ffffff15"} strokeWidth="0.5" />
             <line x1={PAD} y1={PAD + H * 0.5} x2={PAD + W} y2={PAD + H * 0.5} stroke={interactive ? "#1a1a24" : "#ffffff15"} strokeWidth="0.5" />
-            {/* Input dots */}
+            {/* Input dots/numbers */}
             {interactive && inBounds.map((s, i) => (
-              <circle key={s.id || i} cx={PAD + s.x * W / 100} cy={PAD + s.y * H / 100} r={5}
-                fill={outcomeColor[s.outcome] || "#999"} opacity={0.9} stroke="#000" strokeWidth="0.5" />
+              scoutNumbered && s.playerNumber ? (
+                <text key={s.id || i} x={PAD + s.x * W / 100} y={PAD + s.y * H / 100 + 3}
+                  fill={outcomeColor[s.outcome] || "#999"} fontSize="9" fontWeight="900"
+                  textAnchor="middle">{s.playerNumber}</text>
+              ) : (
+                <circle key={s.id || i} cx={PAD + s.x * W / 100} cy={PAD + s.y * H / 100} r={5}
+                  fill={outcomeColor[s.outcome] || "#999"} opacity={0.9} stroke="#000" strokeWidth="0.5" />
+              )
             ))}
             {/* OOB dots in border */}
             {interactive && oob.map((s, i) => {
@@ -3519,9 +3930,14 @@ function VolleyballStats() {
               const oy = Math.max(3, Math.min(TH - 3, PAD + s.y * H / 100));
               return <circle key={`o${i}`} cx={ox} cy={oy} r={4} fill={outcomeColor[s.outcome] || "#999"} opacity={0.7} stroke="#ef4444" strokeWidth="0.5" />;
             })}
-            {/* Heatmap white markers */}
+            {/* Heatmap markers */}
             {!interactive && inBounds.map((s, i) => (
-              <circle key={s.id || i} cx={PAD + s.x * W / 100} cy={PAD + s.y * H / 100} r={2} fill="#fff" opacity={0.7} />
+              scoutNumbered && s.playerNumber ? (
+                <text key={s.id || i} x={PAD + s.x * W / 100} y={PAD + s.y * H / 100 + 3}
+                  fill="#fff" fontSize="8" fontWeight="900" textAnchor="middle" opacity={0.8}>{s.playerNumber}</text>
+              ) : (
+                <circle key={s.id || i} cx={PAD + s.x * W / 100} cy={PAD + s.y * H / 100} r={2} fill="#fff" opacity={0.7} />
+              )
             ))}
           </svg>
           {interactive && scoutPending && shotList.length === 0 && (
@@ -3544,15 +3960,34 @@ function VolleyballStats() {
             goBack();
           }}>&larr;</button>
           <h1 style={S.headerTitle}>Scout: {currentScout.name}</h1>
-          <span style={{ fontSize: 11, opacity: 0.5 }}>{shots.length}</span>
+          <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+            <button style={{ background: "none", border: "none", color: "#9ca3af", fontSize: 14, cursor: "pointer" }}
+              onClick={() => setScoutFullView(!scoutFullView)}>{scoutFullView ? "⤡" : "⤢"}</button>
+            <button style={{ background: scoutNumbered ? "#007bff" : "none", border: "1px solid #2a2a34", color: scoutNumbered ? "#000" : "#9ca3af", fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4, cursor: "pointer" }}
+              onClick={() => setScoutNumbered(!scoutNumbered)}>{scoutNumbered ? "#" : "●"}</button>
+            <span style={{ fontSize: 11, opacity: 0.5 }}>{shots.length}</span>
+          </div>
         </div>
 
         <div style={S.pad}>
+          {/* Hitter # input */}
+          <div style={{ display: "flex", gap: 4, marginBottom: 6, alignItems: "center" }}>
+            <span style={{ fontSize: 10, fontWeight: 700, opacity: 0.5 }}>Hitter #</span>
+            <input style={{ ...S.input, width: 50, margin: 0, textAlign: "center", fontSize: 14, fontWeight: 800 }}
+              inputMode="numeric" placeholder="#" value={scoutPlayerNum} onChange={e => setScoutPlayerNum(e.target.value.replace(/\D/g, "").slice(0, 3))} />
+            {(() => { const recent = [...new Set(shots.map(s => s.playerNumber).filter(Boolean))].reverse().slice(0, 6); return recent.length > 0 ? recent.map(n => (
+              <button key={n} style={{ background: scoutPlayerNum === n ? "#007bff" : "#1a1a24", color: scoutPlayerNum === n ? "#000" : "#fff", border: "none", borderRadius: 4, padding: "3px 7px", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                onClick={() => setScoutPlayerNum(n)}>{n}</button>
+            )) : null; })()}
+          </div>
+
           <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
             <button style={{ ...S.gb, flex: 1, background: scoutView === "input" ? "#007bff" : "#1a1a24", color: scoutView === "input" ? "#000" : "#fff" }}
               onClick={() => { setScoutView("input"); setScoutPending(null); setScoutOriginFilter(null); }}>+ Log Attacks</button>
             <button style={{ ...S.gb, flex: 1, background: scoutView === "heatmap" ? "#007bff" : "#1a1a24", color: scoutView === "heatmap" ? "#000" : "#fff" }}
               onClick={() => { setScoutView("heatmap"); setScoutPending(null); setScoutOriginFilter(null); }}>Heat Map ({shots.length})</button>
+            <button style={{ ...S.gb, flex: 1, background: scoutView === "passing" ? "#007bff" : "#1a1a24", color: scoutView === "passing" ? "#000" : "#fff" }}
+              onClick={() => setScoutView("passing")}>Passing</button>
           </div>
 
           {/* ═══ INPUT MODE ═══ */}
@@ -3681,6 +4116,77 @@ function VolleyballStats() {
               </div>
             </div>
           )}
+
+          {/* ═══ PASSING MODE ═══ */}
+          {scoutView === "passing" && (() => {
+            const grades = currentScout.passingGrades || [];
+            const addGrade = (grade) => {
+              if (!scoutPlayerNum) { showToast("Enter hitter # first"); return; }
+              const entry = { id: Date.now().toString(), grade, playerNumber: scoutPlayerNum, timestamp: Date.now() };
+              const updated = { ...currentScout, passingGrades: [...grades, entry] };
+              setCurrentScout(updated);
+              const sessions = scoutSessions.map((s) => s.id === updated.id ? updated : s);
+              if (!sessions.find((s) => s.id === updated.id)) sessions.push(updated);
+              saveScoutSessions(sessions);
+              showToast(`#${scoutPlayerNum} pass: ${grade}`);
+            };
+            const undoGrade = () => {
+              if (grades.length === 0) return;
+              const updated = { ...currentScout, passingGrades: grades.slice(0, -1) };
+              setCurrentScout(updated);
+              const sessions = scoutSessions.map((s) => s.id === updated.id ? updated : s);
+              saveScoutSessions(sessions);
+              showToast("Grade removed");
+            };
+            // Group by player number
+            const byPlayer = {};
+            for (const g of grades) {
+              if (!byPlayer[g.playerNumber]) byPlayer[g.playerNumber] = [];
+              byPlayer[g.playerNumber].push(g);
+            }
+            const gradeColors = { 0: "#991b1b", 1: "#92400e", 2: "#854d0e", 3: "#166534" };
+            return (
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#007bff", letterSpacing: 1, textAlign: "center", marginBottom: 8 }}>
+                  OPPONENT PASSING GRADES
+                </div>
+                {!scoutPlayerNum && <div style={{ textAlign: "center", fontSize: 11, color: "#ef4444", marginBottom: 8 }}>Enter hitter # above first</div>}
+                <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 12 }}>
+                  {[0, 1, 2, 3].map(g => (
+                    <button key={g} style={{ width: 56, height: 56, borderRadius: 10, border: "none", background: gradeColors[g], color: "#fff", fontSize: 22, fontWeight: 900, cursor: "pointer", opacity: scoutPlayerNum ? 1 : 0.3 }}
+                      disabled={!scoutPlayerNum} onClick={() => addGrade(g)}>{g}</button>
+                  ))}
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                  <span style={{ fontSize: 11, opacity: 0.5 }}>{grades.length} entries</span>
+                  <button style={{ ...S.gb, background: "#2a2a34", padding: "4px 12px", fontSize: 10 }} disabled={grades.length === 0} onClick={undoGrade}>Undo</button>
+                </div>
+                {Object.keys(byPlayer).length > 0 && (
+                  <div style={S.card}>
+                    <div style={{ fontSize: 10, fontWeight: 700, opacity: 0.5, letterSpacing: 1, marginBottom: 6 }}>PLAYER SUMMARY</div>
+                    {Object.entries(byPlayer).sort(([a],[b]) => Number(a) - Number(b)).map(([num, entries]) => {
+                      const avg = entries.reduce((s, e) => s + e.grade, 0) / entries.length;
+                      const counts = { 0: 0, 1: 0, 2: 0, 3: 0 };
+                      for (const e of entries) counts[e.grade]++;
+                      return (
+                        <div key={num} style={{ padding: "6px 0", borderBottom: "1px solid #1a1a24" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontWeight: 800, fontSize: 14 }}>#{num}</span>
+                            <span style={{ fontSize: 12, opacity: 0.7 }}>Avg <span style={{ fontWeight: 800, color: avg >= 2.0 ? "#22c55e" : avg >= 1.5 ? "#eab308" : "#ef4444" }}>{avg.toFixed(2)}</span> | {entries.length} passes</span>
+                          </div>
+                          <div style={{ display: "flex", gap: 4, marginTop: 3 }}>
+                            {[3, 2, 1, 0].map(g => counts[g] > 0 ? (
+                              <span key={g} style={{ fontSize: 9, color: gradeColors[g], fontWeight: 700 }}>{g}s:{counts[g]}</span>
+                            ) : null)}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </div>
     );
@@ -4097,43 +4603,48 @@ function VolleyballStats() {
           }
 
           // Performance-driven suggestions
-          if (kPct < 0.10 && att > 5) sug.push("Attack efficiency critically low — run middles/quicks to open the pins.");
-          else if (kPct < 0.20 && att > 5) sug.push("Hitting below .200 — consider spreading offense to force defensive adjustments.");
-          if ((st.serve_error||0) > (st.ace||0) + 1) sug.push("Serve errors exceed aces — dial back risk, prioritize placement.");
-          if ((st.ball_error||0) >= 3) sug.push(`${st.ball_error} ball handling errors — clean up passing and setting contacts.`);
+          if (kPct < 0.10 && att > 5) sug.push("Attack efficiency below .100 — try working middles and quicks to create better pin angles.");
+          else if (kPct < 0.20 && att > 5) sug.push("Hitting below .200 — spreading the offense can pull their block and open lanes.");
+          if ((st.serve_error||0) > (st.ace||0) + 1) sug.push("Serve errors exceed aces — shifting to placement-first serving could flip this margin.");
+          if ((st.ball_error||0) >= 3) sug.push(`${st.ball_error} ball handling errors — focusing on clean first contacts will tighten the system.`);
 
           // PIR-driven player suggestions
           if (bestPlayer && bestPlayer.pir > 0 && bestPlayer.actions >= 3) {
             const topCat = Object.entries(bestPlayer.breakdown).filter(([,v]) => v !== 0).sort(([,a],[,b]) => b - a)[0];
             const catLabel = topCat ? ` (${topCat[0]})` : "";
-            sug.push(`🔥 ${bestPlayer.name} highest impact at +${bestPlayer.pir.toFixed(2)}${catLabel} — emphasize them.`);
+            sug.push(`🔥 ${bestPlayer.name} leading the way at +${bestPlayer.pir.toFixed(2)}${catLabel} — look to keep getting them touches.`);
           }
           if (worstPlayer && worstPlayer.pir < -0.5 && worstPlayer.actions >= 3) {
             const weakCat = Object.entries(worstPlayer.breakdown).filter(([,v]) => v < 0).sort(([,a],[,b]) => a - b)[0];
             const catLabel = weakCat ? ` (${weakCat[0]} ${weakCat[1].toFixed(1)})` : "";
-            sug.push(`⚠️ ${worstPlayer.name} struggling at ${worstPlayer.pir.toFixed(2)} PIR${catLabel} — reduce touches or sub.`);
+            sug.push(`⚠️ ${worstPlayer.name} at ${worstPlayer.pir.toFixed(2)} PIR${catLabel} — consider a role adjustment or a breather.`);
           }
           // Mid-tier players with specific category issues
           for (const pp of playerPIRs) {
             if (pp === bestPlayer || pp === worstPlayer) continue;
-            if (pp.breakdown.serving <= -1.0 && pp.actions >= 2) sug.push(`${pp.name} serve errors costly (${pp.breakdown.serving.toFixed(1)}) — have them dial back.`);
-            if (pp.breakdown.passing <= -1.0 && pp.actions >= 2) sug.push(`${pp.name} pass errors hurting (${pp.breakdown.passing.toFixed(1)}) — adjust positioning.`);
+            if (pp.breakdown.serving <= -1.0 && pp.actions >= 2) sug.push(`${pp.name} serve margin is negative (${pp.breakdown.serving.toFixed(1)}) — a shorter toss or more placement could help.`);
+            if (pp.breakdown.passing <= -1.0 && pp.actions >= 2) sug.push(`${pp.name} passing trending down (${pp.breakdown.passing.toFixed(1)}) — check court positioning and platform angle.`);
           }
           // Hot/cold hitter backup (non-PIR)
           const hot = topH.find((h) => h.pct !== null && h.pct > 0.3 && h.att >= 3 && (!bestPlayer || h.id !== bestPlayer.id));
-          if (hot) sug.push(`${hot.name} hitting .${Math.round(hot.pct*1000).toString().padStart(3,"0")} — keep feeding them.`);
+          if (hot) sug.push(`${hot.name} hitting .${Math.round(hot.pct*1000).toString().padStart(3,"0")} — keep running plays through them.`);
           const cold = topH.find((h) => h.pct !== null && h.pct < 0 && h.att >= 3 && (!worstPlayer || h.id !== worstPlayer.id));
-          if (cold) sug.push(`${cold.name} negative hitting (${cold.k}K/${cold.e}E) — reduce their swings.`);
+          if (cold) sug.push(`${cold.name} at negative efficiency (${cold.k}K/${cold.e}E) — consider redirecting sets to balance the attack.`);
 
-          // Score-driven suggestions
-          if (scoreDiff <= -5) sug.push("Down 5+ — consider lineup change or aggressive serving to break their rhythm.");
-          else if (scoreDiff <= -3) sug.push("Down 3 — stay disciplined, minimize unforced errors, make them earn it.");
-          else if (scoreDiff >= 5 && (set?.ourScore||0) >= 20) sug.push("Commanding lead — stay aggressive, close it out.");
+          // Score-driven suggestions (use relative points remaining)
+          const _targetScore = getSetTargetScore(set);
+          const _ourRemaining = _targetScore - (set?.ourScore || 0);
+          const _theirRemaining = _targetScore - (set?.theirScore || 0);
+          if (scoreDiff <= -5) sug.push("Down 5+ — a strategic sub or a change in serve strategy could shift momentum.");
+          else if (scoreDiff <= -3) sug.push("Down 3 — staying disciplined on serve and pass will set up a run.");
+          else if (scoreDiff >= 5 && _ourRemaining <= 5) sug.push("Commanding lead — stay aggressive, close it out.");
+          if (_ourRemaining <= 3 && _ourRemaining > 0) sug.push(`${_ourRemaining} point${_ourRemaining === 1 ? "" : "s"} from the set — finish strong.`);
+          if (_theirRemaining <= 3 && _theirRemaining > 0) sug.push(`Opponent ${_theirRemaining} from the set — tighten up now.`);
 
           // Match context
           if (matchSetsLost > matchSetsWon && ((currentMatch.sets||[])).length > 1) sug.push("Down in match — consider adjustments from earlier sets.");
-          if ((st.dig||0) < 3 && (set?.theirScore||0) >= 10) sug.push("Low digs — adjust defensive base positions.");
-          if ((st.stuff_block||0) === 0 && (set?.theirScore||0) >= 10) sug.push("No stuff blocks — re-evaluate blocking scheme and assignments.");
+          if ((st.dig||0) < 3 && (set?.theirScore||0) >= 10) sug.push("Low dig count — reviewing defensive base positions could create more touches.");
+          if ((st.stuff_block||0) === 0 && (set?.theirScore||0) >= 10) sug.push("No stuff blocks yet — consider adjusting block assignments or closing the seam.");
           if (sug.length === 0) sug.push("Keep tracking — every stat builds the picture.");
 
           // Pre-formula context: add generic comparative insights
@@ -4145,7 +4656,7 @@ function VolleyballStats() {
               else if (sideoutPct <= 40) sug.push(`Only ${sideoutPct}% of total points — need a run. Consider lineup or serving changes.`);
             }
             const totalErrors = (st.attack_error||0) + (st.ball_error||0) + (st.serve_error||0);
-            if (totalErrors >= 5 && totalErrors > (st.kill||0)) sug.push(`${totalErrors} total errors exceed ${st.kill||0} kills — clean up unforced mistakes.`);
+            if (totalErrors >= 5 && totalErrors > (st.kill||0)) sug.push(`${totalErrors} total errors exceed ${st.kill||0} kills — reducing unforced mistakes will tighten the gap.`);
           }
 
           return (
@@ -4253,7 +4764,8 @@ function VolleyballStats() {
                     const isBest = i === 0 && pp.pir > 0;
                     const isWorst = i === playerPIRs.length - 1 && pp.pir < -0.5;
                     // Top positive and negative category
-                    const cats = Object.entries(pp.breakdown).filter(([,v]) => Math.abs(v) >= 0.1).sort(([,a],[,b]) => Math.abs(b) - Math.abs(a));
+                    const _mBkdn = { ...pp.breakdown, defense: (pp.breakdown.defense || 0) + (pp.breakdown.cover || 0) }; delete _mBkdn.cover;
+                    const cats = Object.entries(_mBkdn).filter(([,v]) => Math.abs(v) >= 0.1).sort(([,a],[,b]) => Math.abs(b) - Math.abs(a));
                     const topCats = cats.slice(0, 2);
                     return (
                       <div key={pp.id} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 0", borderBottom: "1px solid #1a1a24", background: isBest ? "#22c55e08" : isWorst ? "#ef444408" : "transparent" }}>
@@ -4308,7 +4820,7 @@ function VolleyballStats() {
             <div style={S.scoreBoard}>
               <div style={S.teamCol}>
                 <span style={S.teamLabel}>US</span>
-                <span style={S.bigScore}>{set?.ourScore || 0}</span>
+                <span style={{ ...S.bigScore, display: "inline-block", cursor: "pointer", animation: scorePulse === "us" ? "scorePulse 0.6s ease-out" : scorePulse === "undo" ? "scorePulseGrey 0.6s ease-out" : "none" }} onClick={() => { setEditScoreUs(set?.ourScore || 0); setEditScoreThem(set?.theirScore || 0); setShowScoreEdit(true); }}>{set?.ourScore || 0}</span>
               </div>
               <div style={S.setChip}>
                 S{set?.number || 1}
@@ -4322,14 +4834,159 @@ function VolleyballStats() {
               </div>
               <div style={S.teamCol}>
                 <span style={S.teamLabel}>{currentMatch.opponent?.slice(0, 5)?.toUpperCase() || "THEM"}</span>
-                <span style={S.bigScore}>{set?.theirScore || 0}</span>
+                <span style={{ ...S.bigScore, display: "inline-block", cursor: "pointer", animation: scorePulse === "them" ? "scorePulseRed 0.6s ease-out" : scorePulse === "undo" ? "scorePulseGrey 0.6s ease-out" : "none" }} onClick={() => { setEditScoreUs(set?.ourScore || 0); setEditScoreThem(set?.theirScore || 0); setShowScoreEdit(true); }}>{set?.theirScore || 0}</span>
               </div>
             </div>
           </div>
-          <div style={{ minWidth: 76, display: "flex", justifyContent: "flex-end" }}>
+          <div style={{ minWidth: 76, display: "flex", justifyContent: "flex-end", gap: 4 }}>
+            <button style={S.undoBtn} onClick={() => setShowMatchSettings(true)}>⚙</button>
             <button style={S.undoBtn} onClick={undoLastAction} disabled={undoStack.length === 0}>↩</button>
           </div>
         </div>
+
+        {/* Score Edit Modal */}
+        {showScoreEdit && (
+          <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.92)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ background: "#0a0a0f", border: "2px solid #007bff", borderRadius: 12, width: "85%", maxWidth: 340, padding: 24 }}>
+              <h3 style={{ color: "#e2e8f0", textAlign: "center", marginBottom: 20, fontSize: 16, fontWeight: 800 }}>EDIT SCORE</h3>
+              <div style={{ display: "flex", justifyContent: "space-around", marginBottom: 24 }}>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 11, color: "#9ca3af", marginBottom: 8, fontWeight: 700 }}>US</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <button style={{ width: 36, height: 36, borderRadius: 8, border: "1px solid #333", background: "#1a1a24", color: "#e2e8f0", fontSize: 18, fontWeight: 800, cursor: "pointer" }} onClick={() => setEditScoreUs(Math.max(0, editScoreUs - 1))}>−</button>
+                    <span style={{ fontSize: 28, fontWeight: 800, color: "#e2e8f0", minWidth: 36, textAlign: "center" }}>{editScoreUs}</span>
+                    <button style={{ width: 36, height: 36, borderRadius: 8, border: "1px solid #333", background: "#1a1a24", color: "#e2e8f0", fontSize: 18, fontWeight: 800, cursor: "pointer" }} onClick={() => setEditScoreUs(editScoreUs + 1)}>+</button>
+                  </div>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 11, color: "#9ca3af", marginBottom: 8, fontWeight: 700 }}>{currentMatch.opponent?.slice(0, 8)?.toUpperCase() || "THEM"}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <button style={{ width: 36, height: 36, borderRadius: 8, border: "1px solid #333", background: "#1a1a24", color: "#e2e8f0", fontSize: 18, fontWeight: 800, cursor: "pointer" }} onClick={() => setEditScoreThem(Math.max(0, editScoreThem - 1))}>−</button>
+                    <span style={{ fontSize: 28, fontWeight: 800, color: "#e2e8f0", minWidth: 36, textAlign: "center" }}>{editScoreThem}</span>
+                    <button style={{ width: 36, height: 36, borderRadius: 8, border: "1px solid #333", background: "#1a1a24", color: "#e2e8f0", fontSize: 18, fontWeight: 800, cursor: "pointer" }} onClick={() => setEditScoreThem(editScoreThem + 1)}>+</button>
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button style={{ flex: 1, padding: 12, background: "#1a1a24", border: "1px solid #333", borderRadius: 8, color: "#9ca3af", fontSize: 13, fontWeight: 700, cursor: "pointer" }} onClick={() => setShowScoreEdit(false)}>CANCEL</button>
+                <button style={{ flex: 1, padding: 12, background: "#065f46", border: "none", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 800, cursor: "pointer" }} onClick={() => {
+                  // Push undo entry with current score snapshot
+                  const undoEntry = {
+                    id: Date.now().toString() + Math.random().toString(36).slice(2, 5),
+                    stat: "_scoreEdit",
+                    timestamp: Date.now(),
+                    _undoScore: {
+                      ourScore: set?.ourScore || 0,
+                      theirScore: set?.theirScore || 0,
+                      weServe: set?.weServe,
+                      currentLineup: { ...(set?.currentLineup || {}) },
+                      rotation: set?.rotation,
+                      liberoSwaps: { ...(set?.liberoSwaps || {}) },
+                    },
+                    _prevPhase: rallyPhase,
+                    _prevRally: currentRally ? { ...currentRally } : null,
+                  };
+                  setUndoStack((prev) => [...prev, undoEntry]);
+                  updateCurrentSet((s) => ({ ...s, ourScore: editScoreUs, theirScore: editScoreThem }));
+                  setRallyPhase("idle");
+                  setCurrentRally(null);
+                  setShowScoreEdit(false);
+                  showToast("Score updated");
+                }}>SAVE</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Match Settings Overlay */}
+        {showMatchSettings && (() => {
+          const lineup = set?.currentLineup || {};
+          const courtPlayerIds = Object.values(lineup).filter(Boolean);
+          const mbsOnCourt = courtPlayerIds.filter(pid => getEffectivePosition(pid) === "MB");
+          const lib1 = set?.libero1Id || set?.liberoId || null;
+          const lib2 = set?.libero2Id || null;
+          const mbMap = set?.mbBackRowMap || {};
+          const posOverrides = set?.positionOverrides || {};
+          const currentPlayTo = set?.playTo || null;
+          const POS_OPTIONS = ["OH", "MB", "S", "OPP", "DS", "L"];
+          return (
+          <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.92)", zIndex: 200, display: "flex", alignItems: "flex-start", justifyContent: "center", overflowY: "auto", padding: "40px 0" }}>
+            <div style={{ background: "#0a0a0f", border: "2px solid #007bff", borderRadius: 12, width: "92%", maxWidth: 400, padding: 20 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <h3 style={{ color: "#e2e8f0", fontSize: 15, fontWeight: 800 }}>MATCH SETTINGS</h3>
+                <button style={{ background: "#1a1a24", border: "1px solid #333", borderRadius: 8, color: "#e2e8f0", padding: "6px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer" }} onClick={() => setShowMatchSettings(false)}>CLOSE</button>
+              </div>
+
+              {/* Serve / Receive */}
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 10, color: "#9ca3af", fontWeight: 700, marginBottom: 6, letterSpacing: 1 }}>SERVE / RECEIVE</div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button style={{ flex: 1, padding: 10, borderRadius: 8, border: "none", fontWeight: 800, fontSize: 12, cursor: "pointer", background: set?.weServe ? "#065f46" : "#1a1a24", color: set?.weServe ? "#fff" : "#9ca3af" }} onClick={() => { updateCurrentSet(s => ({...s, weServe: true})); setRallyPhase("idle"); setCurrentRally(null); }}>WE SERVE</button>
+                  <button style={{ flex: 1, padding: 10, borderRadius: 8, border: "none", fontWeight: 800, fontSize: 12, cursor: "pointer", background: !set?.weServe ? "#991b1b" : "#1a1a24", color: !set?.weServe ? "#fff" : "#9ca3af" }} onClick={() => { updateCurrentSet(s => ({...s, weServe: false})); setRallyPhase("idle"); setCurrentRally(null); }}>THEY SERVE</button>
+                </div>
+              </div>
+
+              {/* Play-To Score */}
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 10, color: "#9ca3af", fontWeight: 700, marginBottom: 6, letterSpacing: 1 }}>PLAY TO</div>
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  <button style={{ padding: "8px 14px", borderRadius: 8, border: "none", fontWeight: 800, fontSize: 12, cursor: "pointer", background: currentPlayTo === 25 || (!currentPlayTo && (set?.number || 1) < (currentMatch?.format === 5 ? 5 : 3)) ? "#065f46" : "#1a1a24", color: "#e2e8f0" }} onClick={() => updateCurrentSet(s => ({...s, playTo: 25}))}>25</button>
+                  <button style={{ padding: "8px 14px", borderRadius: 8, border: "none", fontWeight: 800, fontSize: 12, cursor: "pointer", background: currentPlayTo === 15 || (!currentPlayTo && (set?.number || 1) >= (currentMatch?.format === 5 ? 5 : 3)) ? "#065f46" : "#1a1a24", color: "#e2e8f0" }} onClick={() => updateCurrentSet(s => ({...s, playTo: 15}))}>15</button>
+                  <input type="number" inputMode="numeric" placeholder="Custom" value={customPlayToInput} onChange={(e) => setCustomPlayToInput(e.target.value)} style={{ width: 70, padding: "8px 6px", borderRadius: 8, border: "1px solid #333", background: "#1a1a24", color: "#e2e8f0", fontSize: 12, textAlign: "center" }} />
+                  <button style={{ padding: "8px 10px", borderRadius: 8, border: "none", fontWeight: 800, fontSize: 11, cursor: "pointer", background: "#007bff", color: "#fff" }} onClick={() => { const v = parseInt(customPlayToInput); if (v >= 1 && v <= 99) { updateCurrentSet(s => ({...s, playTo: v})); setCustomPlayToInput(""); showToast(`Playing to ${v}`); } else { showToast("Enter 1-99"); } }}>SET</button>
+                </div>
+                {currentPlayTo && <div style={{ fontSize: 10, color: "#007bff", marginTop: 4 }}>Currently playing to {currentPlayTo}</div>}
+              </div>
+
+              {/* Libero-MB Assignment */}
+              {mbsOnCourt.length > 0 && (lib1 || lib2) && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 10, color: "#9ca3af", fontWeight: 700, marginBottom: 6, letterSpacing: 1 }}>LIBERO-MB ASSIGNMENT</div>
+                  {mbsOnCourt.map(mbId => {
+                    const mbP = getPlayerById(mbId);
+                    const lib1P = lib1 ? getPlayerById(lib1) : null;
+                    const lib2P = lib2 ? getPlayerById(lib2) : null;
+                    const currentAssign = mbMap[mbId] || "libero1";
+                    return (
+                      <div key={mbId} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                        <span style={{ fontSize: 11, color: "#e2e8f0", fontWeight: 700, minWidth: 60 }}>{mbP?.name?.split(" ")[0] || `#${mbP?.number}`}</span>
+                        <select style={{ flex: 1, padding: 6, borderRadius: 6, border: "1px solid #333", background: "#1a1a24", color: "#e2e8f0", fontSize: 11 }}
+                          value={currentAssign}
+                          onChange={(e) => updateCurrentSet(s => ({...s, mbBackRowMap: {...(s.mbBackRowMap || {}), [mbId]: e.target.value}}))}>
+                          {lib1P && <option value="libero1">{lib1P.name?.split(" ")[0] || `#${lib1P.number}`} (L1)</option>}
+                          {lib2P && <option value="libero2">{lib2P.name?.split(" ")[0] || `#${lib2P.number}`} (L2)</option>}
+                          <option value="self">No Sub</option>
+                        </select>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Position Overrides */}
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ fontSize: 10, color: "#9ca3af", fontWeight: 700, marginBottom: 6, letterSpacing: 1 }}>POSITIONS</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                  {courtPlayerIds.map(pid => {
+                    const p = getPlayerById(pid);
+                    const currentPos = getEffectivePosition(pid);
+                    return (
+                      <div key={pid} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                        <span style={{ fontSize: 11, color: "#e2e8f0", fontWeight: 600, minWidth: 50, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p?.name?.split(" ")[0] || `#${p?.number}`}</span>
+                        <select style={{ flex: 1, padding: 4, borderRadius: 5, border: "1px solid #333", background: "#1a1a24", color: "#e2e8f0", fontSize: 10 }}
+                          value={currentPos}
+                          onChange={(e) => updateCurrentSet(s => ({...s, positionOverrides: {...(s.positionOverrides || {}), [pid]: e.target.value}}))}>
+                          {POS_OPTIONS.map(pos => <option key={pos} value={pos}>{pos}</option>)}
+                        </select>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+          );
+        })()}
 
         {/* Serve indicator + failsafe buttons */}
         <div style={{ display: "flex", alignItems: "stretch", borderBottom: "1px solid #1a1a24" }}>
@@ -4401,7 +5058,7 @@ function VolleyballStats() {
                         <button
                           style={{ padding: "10px 8px", background: isCurrent ? "#0a1525" : "#111118", border: `2px solid ${isCurrent ? "#007bff" : "#1e1e28"}`, borderRadius: 8, color: "#e2e8f0", cursor: "pointer", textAlign: "center" }}
                           onClick={() => {}}>
-                          <div style={{ fontWeight: 800, fontSize: 14 }}>#{s.player?.number} {s.player?.name?.split(" ")[0]}</div>
+                          <div style={{ fontWeight: 800, fontSize: 14 }}>{displayName(s.player)} <span style={{ fontSize: 10, opacity: 0.5 }}>#{s.player?.number}</span></div>
                           <div style={{ fontSize: 9, opacity: 0.4 }}>{getEffectivePosition(s.id) || "?"} • started Z{s.zone}</div>
                         </button>
                         <div style={{ display: "flex", gap: 4 }}>
@@ -4762,12 +5419,28 @@ function VolleyballStats() {
                         </>
                       )}
 
-                      {/* OFFENSE: non-hitter/non-setter — CVR | ERR */}
+                      {/* OFFENSE: non-hitter/non-setter — FULL buttons (any player can attack) */}
                       {phase === "offense" && !isHitter && !isSetter && (
                         <>
+                          <button style={{ ...S.cb, background: "#166534" }} onClick={() => {
+                            recordEvent(pid, "kill"); showToast(`${firstName} KILL`);
+                            setAssistPrompt({ killerId: pid, rally: { ...currentRally } });
+                          }}>KILL</button>
+                          <button style={{ ...S.cb, background: "#7f1d1d" }} onClick={() => {
+                            recordEvent(pid, "attack_error"); showToast(`${firstName} E`);
+                            endRally(false, { ...currentRally, endStat: "attack_error", attacker: pid });
+                          }}>ATT E</button>
+                          <button style={{ ...S.cb, background: "#0a1929" }} onClick={() => {
+                            recordEvent(pid, "attack_blocked"); showToast(`${firstName} BLKD`);
+                            endRally(false, { ...currentRally, endStat: "attack_blocked", attacker: pid });
+                          }}>BLKD</button>
                           <button style={{ ...S.cb, background: "#1e3a5f" }} onClick={() => {
                             recordEvent(pid, "cvr"); showToast(`${firstName} CVR`);
                           }}>CVR</button>
+                          <button style={{ ...S.cb, background: "#854d0e" }} onClick={() => {
+                            showToast("Dug \u2192 DEF");
+                            setRallyPhase("defense");
+                          }}>DUG</button>
                           <button style={{ ...S.cb, background: "#991b1b" }} onClick={() => {
                             recordEvent(pid, "ball_error"); showToast(`${firstName} ERR`);
                             endRally(false, { ...currentRally, endStat: "ball_error" });
@@ -5002,7 +5675,7 @@ function VolleyballStats() {
                       <th style={S.sth}>SA</th>
                       <th style={S.sth}>SE</th>
                       <th style={S.sth}>D</th>
-                      <th style={S.sth}>CV</th>
+                      <th style={S.sth}>PASS</th>
                       <th style={S.sth}>BK</th>
                       <th style={S.sth}>SB</th>
                       <th style={S.sth}>BE</th>
@@ -5028,8 +5701,8 @@ function VolleyballStats() {
                           <td style={{ ...S.std, color: "#5ba3ff" }}>{ps.assist || 0}</td>
                           <td style={{ ...S.std, color: "#007bff" }}>{ps.ace || 0}</td>
                           <td style={{ ...S.std, color: (ps.serve_error || 0) > 0 ? "#ef4444" : "#6b7280" }}>{ps.serve_error || 0}</td>
-                          <td style={S.std}>{ps.dig || 0}</td>
-                          <td style={{ ...S.std, color: "#60a5fa" }}>{ps.cvr || 0}</td>
+                          <td style={S.std}>{(ps.dig || 0) + (ps.cvr || 0)}</td>
+                          {(() => { const ps2 = getViewPassingStats(p.id); const avg = ps2?.simpleAvg; return <td style={{ ...S.std, color: avg != null ? (avg >= 2.0 ? "#22c55e" : avg >= 1.5 ? "#007bff" : "#ef4444") : "#6b7280" }}>{avg != null ? avg.toFixed(2) : "—"}</td>; })()}
                           <td style={S.std}>{ps.block || 0}</td>
                           <td style={{ ...S.std, color: "#22c55e" }}>{ps.stuff_block || 0}</td>
                           <td style={{ ...S.std, color: (ps.ball_error || 0) > 0 ? "#ef4444" : "#6b7280" }}>{ps.ball_error || 0}</td>
@@ -5048,8 +5721,8 @@ function VolleyballStats() {
                       <td style={{ ...S.std, fontWeight: 800 }}>{vTotals.assist || 0}</td>
                       <td style={{ ...S.std, fontWeight: 800 }}>{vTotals.ace || 0}</td>
                       <td style={{ ...S.std, fontWeight: 800 }}>{vTotals.serve_error || 0}</td>
-                      <td style={{ ...S.std, fontWeight: 800 }}>{vTotals.dig || 0}</td>
-                      <td style={{ ...S.std, fontWeight: 800 }}>{vTotals.cvr || 0}</td>
+                      <td style={{ ...S.std, fontWeight: 800 }}>{(vTotals.dig || 0) + (vTotals.cvr || 0)}</td>
+                      {(() => { let totalPasses = 0, totalQuality = 0; for (const p of rosterPlayers) { const ps2 = getViewPassingStats(p.id); if (ps2 && ps2.total > 0) { totalPasses += ps2.total; totalQuality += ps2.total * ps2.simpleAvg; } } const teamAvg = totalPasses > 0 ? totalQuality / totalPasses : null; return <td style={{ ...S.std, fontWeight: 800 }}>{teamAvg !== null ? teamAvg.toFixed(2) : "—"}</td>; })()}
                       <td style={{ ...S.std, fontWeight: 800 }}>{vTotals.block || 0}</td>
                       <td style={{ ...S.std, fontWeight: 800 }}>{vTotals.stuff_block || 0}</td>
                       <td style={{ ...S.std, fontWeight: 800 }}>{vTotals.ball_error || 0}</td>
@@ -5074,27 +5747,27 @@ function VolleyballStats() {
                 .sort((a, b) => b.pis.total - a.pis.total)
                 .map((r, i) => {
                   const { player: p, pis } = r;
-                  const maxAbs = Math.max(1, ...Object.values(pis.breakdown).map(Math.abs));
                   const cats = [
                     { key: "offense", label: "OFF", color: "#22c55e" },
                     { key: "serving", label: "SRV", color: "#007bff" },
                     { key: "passing", label: "PAS", color: "#eab308" },
                     { key: "blocking", label: "BLK", color: "#a855f7" },
                     { key: "defense", label: "DEF", color: "#60a5fa" },
-                    { key: "cover", label: "CVR", color: "#14b8a6" },
                     { key: "setting", label: "SET", color: "#f472b6" },
                   ];
+                  const mBkdn = { ...pis.breakdown, defense: (pis.breakdown.defense || 0) + (pis.breakdown.cover || 0) };
+                  const maxAbs = Math.max(1, ...cats.map(c => Math.abs(mBkdn[c.key] || 0)));
                   return (
                     <div key={p.id} style={{ padding: "6px 0", borderBottom: i < rosterPlayers.length - 1 ? "1px solid #1a1a24" : "none" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
-                        <span style={{ fontWeight: 700, fontSize: 12 }}>#{p.number} {p.name?.split(" ")[0]}</span>
+                        <span style={{ fontWeight: 700, fontSize: 12 }}>{displayName(p)} <span style={{ opacity: 0.5, fontSize: 10 }}>#{p.number}</span></span>
                         <span style={{ fontWeight: 800, fontSize: 14, color: pis.total > 0 ? "#22c55e" : pis.total < 0 ? "#ef4444" : "#6b7280" }}>
                           {pis.total > 0 ? "+" : ""}{pis.total.toFixed(1)}
                         </span>
                       </div>
                       <div style={{ display: "flex", gap: 2, height: 10 }}>
                         {cats.map(c => {
-                          const val = pis.breakdown[c.key] || 0;
+                          const val = mBkdn[c.key] || 0;
                           if (val === 0) return null;
                           const w = Math.max(4, Math.abs(val) / maxAbs * 100);
                           return (
@@ -5105,7 +5778,7 @@ function VolleyballStats() {
                       </div>
                       <div style={{ display: "flex", gap: 6, marginTop: 2, flexWrap: "wrap" }}>
                         {cats.map(c => {
-                          const val = pis.breakdown[c.key] || 0;
+                          const val = mBkdn[c.key] || 0;
                           if (val === 0) return null;
                           return (
                             <span key={c.key} style={{ fontSize: 8, color: c.color, opacity: 0.6 }}>
@@ -5456,7 +6129,7 @@ function VolleyballStats() {
             let x, y;
             if (e && e.currentTarget) { const rect = e.currentTarget.getBoundingClientRect(); x = ((e.clientX - rect.left) / rect.width) * 100; y = ((e.clientY - rect.top) / rect.height) * 100; }
             else { x = manualX; y = manualY; }
-            const shot = { id: Date.now().toString(), originZone: scoutPending.originZone, outcome: scoutPending.outcome, x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10, timestamp: Date.now() };
+            const shot = { id: Date.now().toString(), originZone: scoutPending.originZone, outcome: scoutPending.outcome, x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10, timestamp: Date.now(), playerNumber: scoutPlayerNum || null };
             updateCurrentSet((s) => ({ ...s, shots: [...(s.shots || []), shot] }));
             const isOOB = x < 0 || x > 100 || y < 0 || y > 100;
             showToast(`${({ kill: "KILL", dug: "DUG", error: "ERR" })[scoutPending.outcome]}${isOOB ? " (OUT)" : ""} from Z${scoutPending.originZone}`);
@@ -5507,9 +6180,21 @@ function VolleyballStats() {
                   <line x1={PAD+100} y1={PAD} x2={PAD+100} y2={PAD+H} stroke={interactive?"#1a1a24":"#ffffff15"} strokeWidth="0.5" />
                   <line x1={PAD+200} y1={PAD} x2={PAD+200} y2={PAD+H} stroke={interactive?"#1a1a24":"#ffffff15"} strokeWidth="0.5" />
                   <line x1={PAD} y1={PAD+H*0.5} x2={PAD+W} y2={PAD+H*0.5} stroke={interactive?"#1a1a24":"#ffffff15"} strokeWidth="0.5" />
-                  {interactive && inB.map((s, i) => (<circle key={s.id||i} cx={PAD+s.x*W/100} cy={PAD+s.y*H/100} r={5} fill={outcomeColor[s.outcome]||"#999"} opacity={0.9} stroke="#000" strokeWidth="0.5" />))}
+                  {interactive && inB.map((s, i) => (
+                    scoutNumbered && s.playerNumber ? (
+                      <text key={s.id||i} x={PAD+s.x*W/100} y={PAD+s.y*H/100+3} fill={outcomeColor[s.outcome]||"#999"} fontSize="9" fontWeight="900" textAnchor="middle">{s.playerNumber}</text>
+                    ) : (
+                      <circle key={s.id||i} cx={PAD+s.x*W/100} cy={PAD+s.y*H/100} r={5} fill={outcomeColor[s.outcome]||"#999"} opacity={0.9} stroke="#000" strokeWidth="0.5" />
+                    )
+                  ))}
                   {interactive && oob.map((s, i) => { const ox = Math.max(3,Math.min(TW-3,PAD+s.x*W/100)), oy = Math.max(3,Math.min(TH-3,PAD+s.y*H/100)); return <circle key={`o${i}`} cx={ox} cy={oy} r={4} fill={outcomeColor[s.outcome]||"#999"} opacity={0.7} stroke="#ef4444" strokeWidth="0.5" />; })}
-                  {!interactive && inB.map((s, i) => (<circle key={s.id||i} cx={PAD+s.x*W/100} cy={PAD+s.y*H/100} r={2} fill="#fff" opacity={0.7} />))}
+                  {!interactive && inB.map((s, i) => (
+                    scoutNumbered && s.playerNumber ? (
+                      <text key={s.id||i} x={PAD+s.x*W/100} y={PAD+s.y*H/100+3} fill="#fff" fontSize="8" fontWeight="900" textAnchor="middle" opacity={0.8}>{s.playerNumber}</text>
+                    ) : (
+                      <circle key={s.id||i} cx={PAD+s.x*W/100} cy={PAD+s.y*H/100} r={2} fill="#fff" opacity={0.7} />
+                    )
+                  ))}
                 </svg>
                 {interactive && scoutPending && shotList.length === 0 && (<div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", pointerEvents: "none", fontSize: 11, fontWeight: 700, color: "#007bff", opacity: 0.4, letterSpacing: 1, textAlign: "center" }}>TAP EXACT SPOT<br/>BALL LANDED</div>)}
               </div>
@@ -5518,6 +6203,20 @@ function VolleyballStats() {
 
           return (
           <div style={S.matchContent}>
+            {/* Hitter # input + toggles */}
+            <div style={{ display: "flex", gap: 4, marginBottom: 6, alignItems: "center" }}>
+              <span style={{ fontSize: 10, fontWeight: 700, opacity: 0.5 }}>Hitter #</span>
+              <input style={{ ...S.input, width: 44, margin: 0, textAlign: "center", fontSize: 13, fontWeight: 800, padding: "3px 4px" }}
+                inputMode="numeric" placeholder="#" value={scoutPlayerNum} onChange={e => setScoutPlayerNum(e.target.value.replace(/\D/g, "").slice(0, 3))} />
+              {(() => { const recent = [...new Set(shots.map(s => s.playerNumber).filter(Boolean))].reverse().slice(0, 4); return recent.map(n => (
+                <button key={n} style={{ background: scoutPlayerNum === n ? "#007bff" : "#1a1a24", color: scoutPlayerNum === n ? "#000" : "#fff", border: "none", borderRadius: 4, padding: "2px 6px", fontSize: 10, fontWeight: 700, cursor: "pointer" }}
+                  onClick={() => setScoutPlayerNum(n)}>{n}</button>
+              )); })()}
+              <div style={{ marginLeft: "auto" }}>
+                <button style={{ background: scoutNumbered ? "#007bff" : "none", border: "1px solid #2a2a34", color: scoutNumbered ? "#000" : "#9ca3af", fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4, cursor: "pointer" }}
+                  onClick={() => setScoutNumbered(!scoutNumbered)}>{scoutNumbered ? "#" : "●"}</button>
+              </div>
+            </div>
             <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
               <button style={{ ...S.gb, flex: 1, background: scoutView === "input" ? "#007bff" : "#1a1a24", color: scoutView === "input" ? "#000" : "#fff" }} onClick={() => { setScoutView("input"); setScoutPending(null); setScoutOriginFilter(null); }}>+ Log</button>
               <button style={{ ...S.gb, flex: 1, background: scoutView === "heatmap" ? "#007bff" : "#1a1a24", color: scoutView === "heatmap" ? "#000" : "#fff" }} onClick={() => { setScoutView("heatmap"); setScoutPending(null); setScoutOriginFilter(null); }}>Heat Map ({shots.length})</button>
@@ -5645,6 +6344,17 @@ function VolleyballStats() {
                 set={set}
                 getPlayerById={getPlayerById}
                 getEffectivePosition={getEffectivePosition}
+                onRotate={() => {
+                  updateCurrentSet((s) => ({
+                    ...s,
+                    currentLineup: rotate(s.currentLineup),
+                    rotation: (s.rotation % 6) + 1,
+                    liberoSwaps: {},
+                  }));
+                  setRallyPhase("idle");
+                  setCurrentRally(null);
+                  showToast("Rotated clockwise");
+                }}
                 onSwapZones={(z1, z2) => {
                   updateCurrentSet((s) => {
                     const newLineup = { ...s.currentLineup };
@@ -5732,8 +6442,8 @@ function SubManager({ onCourt, bench, onSub }) {
                 cursor: subOut ? "pointer" : "default",
                 opacity: subOut ? 1 : 0.4,
               }}>
-                <span style={{ fontWeight: 900, fontSize: 16, minWidth: 28 }}>#{p.number}</span>
-                <span style={{ flex: 1, fontSize: 12, fontWeight: 600 }}>{p.name?.split(" ")[0]}</span>
+                <span style={{ fontWeight: 900, fontSize: 14, minWidth: 50 }}>{displayName(p)}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.5 }}>#{p.number}</span>
                 <span style={{ fontSize: 9, opacity: 0.4, fontWeight: 700 }}>{p.effectivePos || ""}</span>
               </button>
             ))}
@@ -5750,7 +6460,7 @@ function SubManager({ onCourt, bench, onSub }) {
 }
 
 // ── FIX LINEUP COMPONENT ──────────────────────────────
-function FixLineup({ set, getPlayerById, getEffectivePosition, onSwapZones, onSetLineup, rotate }) {
+function FixLineup({ set, getPlayerById, getEffectivePosition, onRotate, onSwapZones, onSetLineup, rotate }) {
   const [selectedZone, setSelectedZone] = useState(null);
   const [showReset, setShowReset] = useState(false);
   
@@ -5821,7 +6531,13 @@ function FixLineup({ set, getPlayerById, getEffectivePosition, onSwapZones, onSe
           Z{selectedZone} selected — tap another zone to swap
         </div>
       )}
-      
+
+      {/* Rotate button */}
+      <button style={{ width: "100%", padding: 12, background: "#065f46", border: "none", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 800, cursor: "pointer", marginBottom: 6, letterSpacing: 1 }}
+        onClick={onRotate}>
+        ROTATE →
+      </button>
+
       {/* Reset to rotation buttons */}
       <button style={{ width: "100%", padding: 10, background: "#1a1a24", border: "1px solid #2a2a34", borderRadius: 8, color: "#e2e8f0", fontSize: 12, fontWeight: 700, cursor: "pointer", marginBottom: 6 }}
         onClick={() => setShowReset(!showReset)}>

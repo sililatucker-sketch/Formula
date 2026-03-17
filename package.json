@@ -1,0 +1,41 @@
+{
+  "name": "formula",
+  "version": "1.0.0",
+  "description": "Volleyball analytics platform featuring PIR and Winning Formula metrics",
+  "main": "index.js",
+  "scripts": {
+    "build": "mkdir -p www && cp index.html www/index.html",
+    "cap:sync": "npx cap sync",
+    "cap:open:ios": "npx cap open ios",
+    "cap:open:android": "npx cap open android",
+    "cap:build": "npm run build && npm run cap:sync"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sililatucker-sketch/Formula.git"
+  },
+  "keywords": [
+    "volleyball",
+    "analytics",
+    "sports"
+  ],
+  "author": "Silila Tucker",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/sililatucker-sketch/Formula/issues"
+  },
+  "homepage": "https://formula.prv8.app",
+  "dependencies": {
+    "@capacitor/android": "^8.2.0",
+    "@capacitor/cli": "^8.2.0",
+    "@capacitor/core": "^8.2.0",
+    "@capacitor/ios": "^8.2.0",
+    "@capacitor/keyboard": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
