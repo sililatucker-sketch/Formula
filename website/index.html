@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Formula — Volleyball Analytics</title>
+  <meta name="description" content="Formula doesn't just track your numbers — it tells you what they mean, in real time, so you can coach." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800;900&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ——— RESET & BASE ——— */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      background: #080A0E;
+      color: #F0F2F5;
+      font-family: 'Outfit', sans-serif;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ——— DESIGN TOKENS ——— */
+    :root {
+      --blue: #007BFF;
+      --blue-bright: #3399FF;
+      --blue-dim: rgba(0,123,255,0.1);
+      --blue-border: rgba(0,123,255,0.25);
+      --blue-glow: rgba(0,123,255,0.18);
+      --bg: #080A0E;
+      --bg2: #0D1017;
+      --surface: #111520;
+      --surface2: #161B28;
+      --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.12);
+      --text: #F0F2F5;
+      --muted: #9BA5B4;
+      --muted2: #6B7486;
+      --display: 'Barlow Condensed', sans-serif;
+    }
+
+    /* ——— SCROLL ANIMATIONS ——— */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+    .reveal-delay-5 { transition-delay: 0.5s; }
+
+    /* ——— GLOBAL TEXTURE ——— */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.5;
+    }
+
+    /* ——— NAV ——— */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 56px;
+      height: 68px;
+      background: rgba(8,10,14,0.88);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: var(--display);
+      font-weight: 900;
+      font-size: 26px;
+      letter-spacing: 0.04em;
+      color: var(--text);
+      text-transform: uppercase;
+    }
+    .nav-logo span { color: var(--blue); }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 36px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.02em;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-btn {
+      background: var(--blue);
+      color: #fff !important;
+      padding: 9px 22px;
+      border-radius: 6px;
+      font-weight: 600 !important;
+      font-size: 13px !important;
+      transition: background 0.2s, transform 0.15s !important;
+    }
+    .nav-btn:hover { background: var(--blue-bright) !important; transform: translateY(-1px); }
+
+    /* ——— HERO ——— */
+    .hero {
+      position: relative;
+      z-index: 1;
+      min-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 80px 24px 100px;
+      overflow: hidden;
+    }
+
+    .hero-orb {
+      position: absolute;
+      top: -10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1000px;
+      height: 700px;
+      background: radial-gradient(ellipse at 50% 30%, rgba(0,123,255,0.14) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 75%);
+      pointer-events: none;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--blue);
+      background: var(--blue-dim);
+      border: 1px solid var(--blue-border);
+      padding: 6px 18px;
+      border-radius: 100px;
+      margin-bottom: 36px;
+      position: relative;
+      animation: fadeUp 0.6s ease both;
+    }
+    .hero-eyebrow .dot {
+      width: 6px; height: 6px;
+      background: var(--blue);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    /* LOGO placeholder — swap for <img> when ready */
+    .hero-logo {
+      font-family: var(--display);
+      font-weight: 900;
+      font-size: clamp(88px, 18vw, 192px);
+      line-height: 0.88;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--text);
+      position: relative;
+      animation: fadeUp 0.7s 0.1s ease both;
+    }
+    .hero-logo span { color: var(--blue); }
+    /* When logo is ready, replace .hero-logo div with:
+       <img src="formula-logo.png" alt="Formula" class="hero-logo-img"> */
+    .hero-logo-img { width: min(80vw, 700px); height: auto; margin-bottom: 8px; animation: fadeUp 0.7s 0.1s ease both; }
+
+    .hero-headline {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: clamp(22px, 4vw, 38px);
+      letter-spacing: 0.01em;
+      color: var(--muted);
+      margin-top: 16px;
+      animation: fadeUp 0.7s 0.18s ease both;
+    }
+    .hero-headline strong { color: var(--text); font-weight: 800; }
+
+    .hero-sub-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      margin: 20px 0 52px;
+      animation: fadeUp 0.7s 0.25s ease both;
+    }
+    .hero-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+    .hero-pill .icon { color: var(--blue); font-size: 15px; }
+    .hero-divider { width: 1px; height: 18px; background: var(--border2); }
+
+    .hero-tagline {
+      font-size: clamp(15px, 2vw, 18px);
+      font-weight: 300;
+      color: var(--muted);
+      max-width: 520px;
+      line-height: 1.7;
+      margin-bottom: 52px;
+      animation: fadeUp 0.7s 0.3s ease both;
+    }
+    .hero-tagline strong { color: var(--text); font-weight: 500; }
+
+    .hero-btns {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+      animation: fadeUp 0.7s 0.38s ease both;
+    }
+
+    .btn-store {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 14px 28px;
+      border-radius: 10px;
+      text-decoration: none;
+      min-width: 195px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn-apple { background: #fff; color: #080A0E; }
+    .btn-apple:hover { transform: translateY(-3px); box-shadow: 0 20px 50px rgba(255,255,255,0.1); }
+    .btn-google { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
+    .btn-google:hover { transform: translateY(-3px); box-shadow: 0 20px 50px rgba(0,123,255,0.12); border-color: var(--blue-border); }
+    .btn-icon { width: 26px; height: 26px; flex-shrink: 0; }
+    .btn-text-wrap { display: flex; flex-direction: column; gap: 1px; }
+    .btn-label { font-size: 9px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.55; }
+    .btn-name { font-family: var(--display); font-size: 18px; font-weight: 700; line-height: 1; letter-spacing: 0.02em; }
+    .btn-apple .btn-label, .btn-apple .btn-name { color: #080A0E; }
+
+    .hero-free-note {
+      margin-top: 22px;
+      font-size: 12px;
+      color: var(--muted2);
+      animation: fadeUp 0.7s 0.45s ease both;
+    }
+    .hero-free-note span { color: var(--blue); }
+
+    /* ——— PROBLEM STRIP ——— */
+    .problem-strip {
+      position: relative;
+      z-index: 1;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 56px 48px;
+      text-align: center;
+    }
+    .problem-strip h2 {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: clamp(28px, 4vw, 48px);
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+    .problem-strip h2 em { color: var(--blue); font-style: normal; }
+    .problem-strip p {
+      font-size: clamp(15px, 1.8vw, 17px);
+      font-weight: 300;
+      color: var(--muted);
+      max-width: 640px;
+      margin: 0 auto;
+      line-height: 1.75;
+    }
+    .problem-strip p strong { color: var(--text); font-weight: 500; }
+
+    /* ——— SHARED SECTION STYLES ——— */
+    .section {
+      position: relative;
+      z-index: 1;
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 112px 56px;
+    }
+
+    .section-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 20px;
+    }
+    .section-eyebrow::before {
+      content: '';
+      width: 20px; height: 2px;
+      background: var(--blue);
+      border-radius: 2px;
+    }
+
+    .section-title {
+      font-family: var(--display);
+      font-weight: 900;
+      font-size: clamp(40px, 6vw, 72px);
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      line-height: 0.95;
+      color: var(--text);
+      margin-bottom: 24px;
+    }
+    .section-title em { color: var(--blue); font-style: normal; }
+
+    .section-sub {
+      font-size: clamp(15px, 1.8vw, 18px);
+      font-weight: 300;
+      color: var(--muted);
+      max-width: 600px;
+      line-height: 1.75;
+    }
+    .section-sub strong { color: var(--text); font-weight: 500; }
+
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: linear-gradient(135deg, rgba(0,123,255,0.15), rgba(0,123,255,0.05));
+      border: 1px solid var(--blue-border);
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 28px;
+    }
+    .ai-badge::before { content: '✦'; font-size: 8px; }
+
+    /* ——— WINNING FORMULA SECTION ——— */
+    .wf-section {
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .wf-inner {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 112px 56px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 100px;
+      align-items: start;
+    }
+    .wf-left { position: sticky; top: 100px; }
+
+    .wf-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .wf-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px 28px;
+      transition: border-color 0.25s, transform 0.25s;
+    }
+    .wf-card:hover { border-color: var(--blue-border); transform: translateX(4px); }
+    .wf-card-num {
+      font-family: var(--display);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: var(--blue);
+      margin-bottom: 10px;
+      opacity: 0.7;
+    }
+    .wf-card-title {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 20px;
+      letter-spacing: 0.03em;
+      color: var(--text);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+    .wf-card-body { font-size: 14px; font-weight: 300; color: var(--muted); line-height: 1.65; }
+
+    .wf-highlight {
+      margin-top: 32px;
+      padding: 28px 28px;
+      background: linear-gradient(135deg, rgba(0,123,255,0.1) 0%, rgba(0,123,255,0.03) 100%);
+      border: 1px solid var(--blue-border);
+      border-radius: 12px;
+    }
+    .wf-highlight p { font-size: 15px; color: var(--text); line-height: 1.65; font-weight: 300; }
+    .wf-highlight p strong { color: var(--blue); font-weight: 600; }
+
+    /* ——— TIMEOUT INSIGHTS SECTION ——— */
+    .timeout-section {
+      border-top: 1px solid var(--border);
+      background: var(--bg2);
+      position: relative;
+      overflow: hidden;
+    }
+    .timeout-glow {
+      position: absolute;
+      top: 0; right: -200px;
+      width: 700px; height: 700px;
+      background: radial-gradient(ellipse, rgba(0,123,255,0.08) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .timeout-inner {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 112px 56px;
+    }
+    .timeout-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: end;
+      margin-bottom: 72px;
+    }
+
+    .timeout-brief {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+    }
+    .timeout-brief-header {
+      background: var(--blue);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .timeout-brief-header .score {
+      font-family: var(--display);
+      font-weight: 900;
+      font-size: 28px;
+      letter-spacing: 0.05em;
+      color: #fff;
+    }
+    .timeout-brief-header .timer-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+    .timeout-brief-header .timer-label {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.7);
+    }
+    .timeout-brief-header .timer {
+      font-family: var(--display);
+      font-weight: 900;
+      font-size: 32px;
+      color: #fff;
+      letter-spacing: 0.05em;
+    }
+    .timeout-brief-body { padding: 24px; }
+    .brief-section { margin-bottom: 18px; }
+    .brief-section:last-child { margin-bottom: 0; }
+    .brief-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted2);
+      margin-bottom: 8px;
+    }
+    .brief-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .brief-item:last-child { margin-bottom: 0; }
+    .brief-item.good { background: rgba(0,200,100,0.07); border: 1px solid rgba(0,200,100,0.15); }
+    .brief-item.bad { background: rgba(255,80,80,0.07); border: 1px solid rgba(255,80,80,0.15); }
+    .brief-item.adjust { background: var(--blue-dim); border: 1px solid var(--blue-border); }
+    .brief-icon { font-size: 13px; margin-top: 1px; flex-shrink: 0; }
+    .brief-item.good .brief-icon { color: #00C864; }
+    .brief-item.bad .brief-icon { color: #FF5050; }
+    .brief-item.adjust .brief-icon { color: var(--blue); }
+
+    .timeout-points {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .timeout-point {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px 24px;
+      transition: border-color 0.2s;
+    }
+    .timeout-point:hover { border-color: var(--blue-border); }
+    .timeout-point .tp-icon { font-size: 22px; margin-bottom: 14px; }
+    .timeout-point .tp-title {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .timeout-point .tp-body { font-size: 13px; font-weight: 300; color: var(--muted); line-height: 1.6; }
+
+    /* ——— PIR SECTION ——— */
+    .pir-section {
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .pir-inner {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 112px 56px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 100px;
+      align-items: start;
+    }
+
+    .pir-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .pir-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .pir-row:hover { border-color: var(--blue-border); background: var(--surface2); }
+    .pir-rank {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: 0.04em;
+      color: var(--muted2);
+      width: 28px;
+      flex-shrink: 0;
+    }
+    .pir-rank.top { color: var(--blue); }
+    .pir-name { flex: 1; font-size: 14px; font-weight: 500; color: var(--text); }
+    .pir-pos { font-size: 11px; font-weight: 500; color: var(--muted2); letter-spacing: 0.06em; margin-right: 8px; }
+    .pir-score {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: 22px;
+      letter-spacing: 0.02em;
+    }
+    .pir-score.high { color: #00C864; }
+    .pir-score.mid { color: var(--text); }
+    .pir-score.low { color: #FF5050; }
+    .pir-bar-wrap {
+      width: 60px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .pir-bar { height: 100%; border-radius: 2px; background: var(--blue); }
+
+    .pir-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 8px;
+    }
+    .pir-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+      transition: border-color 0.2s;
+    }
+    .pir-card:hover { border-color: var(--blue-border); }
+    .pir-card-icon { font-size: 22px; margin-bottom: 14px; }
+    .pir-card-title {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .pir-card-body { font-size: 13px; font-weight: 300; color: var(--muted); line-height: 1.6; }
+
+    /* ——— DEVICES SECTION ——— */
+    .devices-section {
+      border-top: 1px solid var(--border);
+      background: var(--bg2);
+    }
+    .devices-inner {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 112px 56px;
+    }
+    .devices-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 64px;
+    }
+    .device-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 48px 40px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.25s, transform 0.25s;
+    }
+    .device-card:hover { border-color: var(--blue-border); transform: translateY(-4px); }
+    .device-card::before {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 200px; height: 200px;
+      background: radial-gradient(ellipse at top right, rgba(0,123,255,0.06), transparent 70%);
+    }
+    .device-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 16px;
+    }
+    .device-name {
+      font-family: var(--display);
+      font-weight: 900;
+      font-size: 48px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--text);
+      line-height: 1;
+      margin-bottom: 20px;
+    }
+    .device-desc { font-size: 15px; font-weight: 300; color: var(--muted); line-height: 1.7; }
+    .device-tag {
+      display: inline-block;
+      margin-top: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--blue);
+      background: var(--blue-dim);
+      border: 1px solid var(--blue-border);
+      padding: 5px 14px;
+      border-radius: 100px;
+    }
+
+    /* ——— WHO IT'S FOR ——— */
+    .who-section {
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .who-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 64px;
+    }
+    .who-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 36px 32px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .who-card:hover { border-color: var(--blue-border); transform: translateY(-4px); }
+    .who-icon { font-size: 28px; margin-bottom: 20px; }
+    .who-title {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: 22px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+    .who-body { font-size: 14px; font-weight: 300; color: var(--muted); line-height: 1.65; }
+
+    /* ——— PRICING ——— */
+    .pricing-section {
+      border-top: 1px solid var(--border);
+      background: var(--bg2);
+    }
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 64px;
+      max-width: 760px;
+    }
+    .price-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px 36px;
+      position: relative;
+      transition: transform 0.2s;
+    }
+    .price-card:hover { transform: translateY(-4px); }
+    .price-card.featured {
+      border-color: var(--blue);
+      background: linear-gradient(145deg, rgba(0,123,255,0.08) 0%, var(--surface) 50%);
+    }
+    .featured-tag {
+      position: absolute;
+      top: -13px; left: 50%;
+      transform: translateX(-50%);
+      background: var(--blue);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 4px 16px;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+    .price-name {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: 22px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+    .price-amount {
+      font-family: var(--display);
+      font-weight: 900;
+      font-size: 52px;
+      color: var(--text);
+      line-height: 1;
+      margin-bottom: 6px;
+      letter-spacing: 0.01em;
+    }
+    .price-amount sup { font-size: 24px; vertical-align: top; margin-top: 8px; display: inline-block; color: var(--muted); font-weight: 600; }
+    .price-period { font-size: 14px; font-weight: 400; color: var(--muted); }
+    .price-desc { font-size: 13px; color: var(--muted); margin: 16px 0 24px; line-height: 1.5; }
+    .price-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .price-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--muted); line-height: 1.4; }
+    .price-list li::before { content: ''; color: var(--blue); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+    .price-addon {
+      margin-top: 20px;
+      padding: 14px 16px;
+      background: var(--blue-dim);
+      border: 1px solid var(--blue-border);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text);
+    }
+    .price-addon strong { color: var(--blue); }
+
+    /* ——— CTA BANNER ——— */
+    .cta-section {
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-glow {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 70% 80% at 50% 50%, rgba(0,123,255,0.08) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .cta-inner {
+      position: relative;
+      z-index: 1;
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 112px 56px;
+      text-align: center;
+    }
+    .cta-inner h2 {
+      font-family: var(--display);
+      font-weight: 900;
+      font-size: clamp(40px, 7vw, 80px);
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      line-height: 0.95;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+    .cta-inner h2 em { color: var(--blue); font-style: normal; }
+    .cta-inner p { font-size: 16px; font-weight: 300; color: var(--muted); margin-bottom: 52px; }
+
+    /* ——— FOOTER ——— */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      background: var(--bg2);
+      padding: 32px 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .footer-logo {
+      font-family: var(--display);
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted2);
+    }
+    .footer-logo span { color: var(--blue); }
+    .footer-links { display: flex; gap: 28px; list-style: none; }
+    .footer-links a { font-size: 12px; color: var(--muted2); text-decoration: none; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--text); }
+    .footer-copy { font-size: 11px; color: var(--muted2); }
+
+    /* ——— KEYFRAMES ——— */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* ——— RESPONSIVE ——— */
+    @media (max-width: 900px) {
+      nav { padding: 0 24px; }
+      .nav-links { display: none; }
+      .section { padding: 80px 24px; }
+      .wf-inner, .pir-inner { grid-template-columns: 1fr; gap: 56px; padding: 80px 24px; }
+      .wf-left { position: static; }
+      .timeout-inner { padding: 80px 24px; }
+      .timeout-header { grid-template-columns: 1fr; gap: 48px; }
+      .timeout-points { grid-template-columns: 1fr; }
+      .devices-inner { padding: 80px 24px; }
+      .devices-grid { grid-template-columns: 1fr; }
+      .who-grid { grid-template-columns: 1fr; }
+      .pricing-grid { grid-template-columns: 1fr; max-width: 100%; }
+      .cta-inner { padding: 80px 24px; }
+      .problem-strip { padding: 56px 24px; }
+      footer { padding: 24px; flex-direction: column; text-align: center; }
+      .footer-links { flex-wrap: wrap; justify-content: center; }
+    }
+    @media (max-width: 600px) {
+      .hero-sub-row { flex-direction: column; gap: 12px; }
+      .hero-divider { display: none; }
+      .hero-btns { flex-direction: column; align-items: center; }
+      .btn-store { min-width: 260px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ——— NAV ——— -->
+  <nav>
+    <div class="nav-logo">FORMULA</div>
+    <ul class="nav-links">
+      <li><a href="#winning-formula">Winning Formula</a></li>
+      <li><a href="#timeout">Timeout Insights</a></li>
+      <li><a href="#pir">PIR</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#download" class="nav-btn">Download Free</a></li>
+    </ul>
+  </nav>
+
+  <!-- ——— HERO ——— -->
+  <section class="hero" id="download">
+    <div class="hero-orb"></div>
+    <div class="hero-grid"></div>
+
+    <div class="hero-eyebrow"><span class="dot"></span>AI-Powered Volleyball Analytics</div>
+
+    <img class="hero-logo-img" src="formula-logo.png" alt="Formula">
+
+    <div class="hero-headline"><strong>The stats app that tells you how to win.</strong></div>
+
+    <div class="hero-sub-row">
+      <div class="hero-pill"><span class="icon">⚡</span> Fast to use</div>
+      <div class="hero-divider"></div>
+      <div class="hero-pill"><span class="icon">◆</span> Easy to read</div>
+      <div class="hero-divider"></div>
+      <div class="hero-pill"><span class="icon">✦</span> Powered by AI</div>
+    </div>
+
+    <p class="hero-tagline">
+      Formula doesn't just track your numbers — <strong>it tells you what they mean,</strong> in real time, so you can coach.
+    </p>
+
+    <div class="hero-btns">
+      <a class="btn-store btn-apple" href="https://apps.apple.com/us/app/formula-by-prv8/id6759474412" target="_blank" rel="noopener">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none"><path d="M17.05 12.67c0-2.49 2.04-3.68 2.13-3.74-1.16-1.7-2.97-1.93-3.61-1.96-1.54-.16-3 .9-3.78.9-.77 0-1.96-.88-3.23-.85-1.66.02-3.19.97-4.04 2.45-1.72 2.98-.44 7.4 1.24 9.82.82 1.18 1.8 2.5 3.07 2.45 1.23-.05 1.7-.8 3.19-.8 1.48 0 1.91.8 3.22.78 1.32-.02 2.16-1.22 2.97-2.41.93-1.38 1.32-2.71 1.34-2.78-.03-.01-2.5-1.86-2.5-3.86z" fill="currentColor"/><path d="M14.6 5.27c.68-.84 1.14-2 1.02-3.16-1 .04-2.2.67-2.91 1.49-.64.74-1.2 1.93-1.05 3.07 1.11.08 2.26-.57 2.94-1.4z" fill="currentColor"/></svg>
+        <div class="btn-text-wrap">
+          <span class="btn-label">Download on the</span>
+          <span class="btn-name">App Store</span>
+        </div>
+      </a>
+      <a class="btn-store btn-google" href="https://play.google.com/store/apps/details?id=com.prv8.formula" target="_blank" rel="noopener">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none"><path d="M4.27 3.54C4 3.9 3.87 4.43 3.87 5.13v13.74c0 .7.13 1.23.42 1.59l.08.08 7.69-7.69v-.18L4.35 3.46l-.08.08z" fill="#007BFF"/><path d="M14.62 15.42l-2.57-2.57v-.18l2.57-2.57.06.03 3.04 1.73c.87.49.87 1.3 0 1.8l-3.04 1.73-.06.03z" fill="#fff"/><path d="M14.68 15.39L12.06 12.8 4.27 20.59c.29.3.76.34 1.29.04l9.12-5.24" fill="#fff" opacity=".85"/><path d="M14.68 10.61L5.56 5.37C5.03 5.07 4.56 5.11 4.27 5.41l7.79 7.79 2.62-2.59z" fill="#fff" opacity=".85"/></svg>
+        <div class="btn-text-wrap">
+          <span class="btn-label">Get it on</span>
+          <span class="btn-name">Google Play</span>
+        </div>
+      </a>
+    </div>
+
+    <p class="hero-free-note"><span>3 matches free.</span> No credit card required.</p>
+  </section>
+
+  <!-- ——— PROBLEM STRIP ——— -->
+  <div class="problem-strip">
+    <h2 class="reveal">Stats have always existed. <em>Usable stats haven't.</em></h2>
+    <p class="reveal reveal-delay-1">Most coaches are already tracking numbers. The problem is that by the time you've read through a stat sheet and figured out what it's telling you, <strong>the timeout is over.</strong> Formula does the interpretation work for you — so the answer is ready before you even call timeout.</p>
+  </div>
+
+  <!-- ——— WINNING FORMULA ——— -->
+  <section class="wf-section" id="winning-formula">
+    <div class="wf-inner">
+      <div class="wf-left">
+        <div class="ai-badge reveal">AI-Powered</div>
+        <div class="section-eyebrow reveal">Winning Formula</div>
+        <h2 class="section-title reveal">Your team's <em>DNA</em> for winning.</h2>
+        <p class="section-sub reveal reveal-delay-1">Formula's AI analyzes every stat across your wins and losses to find what <strong>actually happens when your team wins</strong> — not generic volleyball trends. Yours.</p>
+
+        <div class="wf-highlight reveal reveal-delay-2">
+          <p>Not <strong>"get more kills."</strong> The AI digs through the entire web of your stats and finds the underlying patterns — the specific parts of your game that, when they're working, you win. Every match you add makes the correlation stronger.</p>
+        </div>
+      </div>
+
+      <div class="wf-cards">
+        <div class="wf-card reveal">
+          <div class="wf-card-num">01</div>
+          <div class="wf-card-title">Built from your data</div>
+          <p class="wf-card-body">After 8 sets of mixed win/loss data, Formula's AI goes to work. It cross-references every stat and finds the correlations that separate your wins from your losses.</p>
+        </div>
+        <div class="wf-card reveal reveal-delay-1">
+          <div class="wf-card-num">02</div>
+          <div class="wf-card-title">Unique to your team</div>
+          <p class="wf-card-body">No two Winning Formulas are the same. Your team's patterns are specific to how you play, who you play with, and how your system is built.</p>
+        </div>
+        <div class="wf-card reveal reveal-delay-2">
+          <div class="wf-card-num">03</div>
+          <div class="wf-card-title">Sharpens over time</div>
+          <p class="wf-card-body">Every match you add strengthens the AI's correlation. The more data in the system, the more accurate and actionable your Winning Formula becomes.</p>
+        </div>
+        <div class="wf-card reveal reveal-delay-3">
+          <div class="wf-card-num">04</div>
+          <div class="wf-card-title">The deeper story</div>
+          <p class="wf-card-body">Kills and passing percentages become a narrative. Formula translates raw numbers into the actual story the stats are telling you about your team.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ——— TIMEOUT INSIGHTS ——— -->
+  <section class="timeout-section" id="timeout">
+    <div class="timeout-glow"></div>
+    <div class="timeout-inner">
+      <div class="timeout-header">
+        <div>
+          <div class="ai-badge reveal">AI-Powered · In-Match Intelligence</div>
+          <div class="section-eyebrow reveal">Timeout Insights</div>
+          <h2 class="section-title reveal">An assistant coach who's already done <em>the math.</em></h2>
+          <p class="section-sub reveal reveal-delay-1">One tap. An instant breakdown of where your team is winning, where they're struggling, and what to do about it — based on your Winning Formula. The entire timeout is yours to coach.</p>
+        </div>
+
+        <!-- TIMEOUT BRIEF MOCKUP -->
+        <div class="timeout-brief reveal reveal-delay-2">
+          <div class="timeout-brief-header">
+            <div class="score">14 — 16</div>
+            <div class="timer-wrap">
+              <span class="timer-label">Timeout</span>
+              <span class="timer">0:42</span>
+            </div>
+          </div>
+          <div class="timeout-brief-body">
+            <div class="brief-section">
+              <div class="brief-label">✓ Working For You</div>
+              <div class="brief-item good"><span class="brief-icon">▲</span>Side-out efficiency above Winning Formula threshold (+12%)</div>
+              <div class="brief-item good"><span class="brief-icon">▲</span>Block assists — highest rated player leading this set</div>
+            </div>
+            <div class="brief-section">
+              <div class="brief-label">✗ Falling Short</div>
+              <div class="brief-item bad"><span class="brief-icon">▼</span>Serve receive error rate 2× your winning average</div>
+              <div class="brief-item bad"><span class="brief-icon">▼</span>Attack errors in rotation 3 — trending negative</div>
+            </div>
+            <div class="brief-section">
+              <div class="brief-label">→ AI Adjustments</div>
+              <div class="brief-item adjust"><span class="brief-icon">◆</span>Serve target zone shift recommended based on current PIR data</div>
+              <div class="brief-item adjust"><span class="brief-icon">◆</span>Consider rotation 3 coverage adjustment</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="timeout-points">
+        <div class="timeout-point reveal">
+          <div class="tp-icon">⚡</div>
+          <div class="tp-title">Instant brief</div>
+          <p class="tp-body">The moment you call timeout, Formula's AI generates a full brief — current match stats cross-referenced against your Winning Formula. No waiting, no loading.</p>
+        </div>
+        <div class="timeout-point reveal reveal-delay-1">
+          <div class="tp-icon">🎯</div>
+          <div class="tp-title">Specific adjustments</div>
+          <p class="tp-body">Not vague feedback. The AI surfaces specific adjustment suggestions based on what the stats say is causing the problem right now.</p>
+        </div>
+        <div class="timeout-point reveal reveal-delay-2">
+          <div class="tp-icon">⏱️</div>
+          <div class="tp-title">Score + timer</div>
+          <p class="tp-body">Current score and a live countdown at the top. Always know exactly how much time you have left without breaking focus.</p>
+        </div>
+        <div class="timeout-point reveal reveal-delay-3">
+          <div class="tp-icon">🗣</div>
+          <div class="tp-title">90% of the timeout is yours</div>
+          <p class="tp-body">Formula handles the analysis in seconds. The rest of the timeout — talking, adjusting, coaching — is entirely yours.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ——— PIR ——— -->
+  <section class="pir-section" id="pir">
+    <div class="pir-inner">
+      <div>
+        <div class="ai-badge reveal">AI-Calculated · Updates Every Point</div>
+        <div class="section-eyebrow reveal">Player Impact Rating</div>
+        <h2 class="section-title reveal"><em>PIR</em> — one number. Who's producing.</h2>
+        <p class="section-sub reveal reveal-delay-1">A new AI-calculated stat that updates live every single point. Not plus/minus — <strong>actual contribution to scoring.</strong> At a glance, you know exactly who to keep on the court and who to pull.</p>
+
+        <div class="pir-cards reveal reveal-delay-2">
+          <div class="pir-card">
+            <div class="pir-card-icon">📊</div>
+            <div class="pir-card-title">Live ranked list</div>
+            <p class="pir-card-body">Your coaching view shows every player ranked highest to lowest PIR — updating every point. No math, no cross-referencing. The answer is right there.</p>
+          </div>
+          <div class="pir-card">
+            <div class="pir-card-icon">🔍</div>
+            <div class="pir-card-title">Stat breakdown per player</div>
+            <p class="pir-card-body">Tap any player to see which specific stats are lifting or dragging their PIR. Creates direct, objective feedback for players on exactly what to improve.</p>
+          </div>
+          <div class="pir-card">
+            <div class="pir-card-icon">📈</div>
+            <div class="pir-card-title">Season-long production record</div>
+            <p class="pir-card-body">Average PIR per player builds over time — a verifiable, objective record of production that follows every athlete across the entire season.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PIR MOCKUP -->
+      <div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted2);margin-bottom:16px;" class="reveal">Live PIR Rankings — Set 2</div>
+        <div class="pir-list reveal">
+          <div class="pir-row">
+            <div class="pir-rank top">1</div>
+            <div class="pir-name">A. Martinez</div>
+            <div class="pir-pos">OH</div>
+            <div class="pir-bar-wrap"><div class="pir-bar" style="width:92%"></div></div>
+            <div class="pir-score high">8.4</div>
+          </div>
+          <div class="pir-row">
+            <div class="pir-rank top">2</div>
+            <div class="pir-name">T. Williams</div>
+            <div class="pir-pos">S</div>
+            <div class="pir-bar-wrap"><div class="pir-bar" style="width:78%"></div></div>
+            <div class="pir-score high">7.1</div>
+          </div>
+          <div class="pir-row">
+            <div class="pir-rank">3</div>
+            <div class="pir-name">J. Okafor</div>
+            <div class="pir-pos">MB</div>
+            <div class="pir-bar-wrap"><div class="pir-bar" style="width:64%"></div></div>
+            <div class="pir-score mid">5.8</div>
+          </div>
+          <div class="pir-row">
+            <div class="pir-rank">4</div>
+            <div class="pir-name">K. Davis</div>
+            <div class="pir-pos">OH</div>
+            <div class="pir-bar-wrap"><div class="pir-bar" style="width:52%"></div></div>
+            <div class="pir-score mid">4.7</div>
+          </div>
+          <div class="pir-row">
+            <div class="pir-rank">5</div>
+            <div class="pir-name">R. Chen</div>
+            <div class="pir-pos">L</div>
+            <div class="pir-bar-wrap"><div class="pir-bar" style="width:40%"></div></div>
+            <div class="pir-score mid">3.6</div>
+          </div>
+          <div class="pir-row">
+            <div class="pir-rank">6</div>
+            <div class="pir-name">S. Johnson</div>
+            <div class="pir-pos">MB</div>
+            <div class="pir-bar-wrap"><div class="pir-bar" style="width:18%;background:#FF5050"></div></div>
+            <div class="pir-score low">1.2</div>
+          </div>
+        </div>
+        <div style="margin-top:12px;font-size:11px;color:var(--muted2);font-style:italic;" class="reveal reveal-delay-1">Updates live every point scored.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ——— DEVICES ——— -->
+  <section class="devices-section">
+    <div class="devices-inner">
+      <div class="section-eyebrow reveal">Built for the Sideline</div>
+      <h2 class="section-title reveal">Easy to use<br><em>on all devices.</em></h2>
+      <p class="section-sub reveal reveal-delay-1">Formula is built to work wherever you are. Two devices. One seamless experience.</p>
+
+      <div class="devices-grid">
+        <div class="device-card reveal reveal-delay-1">
+          <div class="device-label">Pocket-ready</div>
+          <div class="device-name">iPhone</div>
+          <p class="device-desc">Fast, unobtrusive input that keeps up with live match pace without pulling your attention off the court. Simple enough to use solo, powerful enough to track everything.</p>
+          <span class="device-tag">Fast input · Live match pace</span>
+        </div>
+        <div class="device-card reveal reveal-delay-2">
+          <div class="device-label">Full coaching dashboard</div>
+          <div class="device-name">iPad</div>
+          <p class="device-desc">A purpose-built layout that opens up the full Formula experience — everything on screen at once. Your Winning Formula, live PIR rankings, and Timeout Insights all visible without switching views.</p>
+          <span class="device-tag">Full dashboard · Everything at once</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ——— WHO IT'S FOR ——— -->
+  <section class="who-section">
+    <div class="section">
+      <div class="section-eyebrow reveal">Who It's For</div>
+      <h2 class="section-title reveal">For coaches who want <em>more</em> out of their data.</h2>
+
+      <div class="who-grid">
+        <div class="who-card reveal">
+          <div class="who-icon">🏐</div>
+          <div class="who-title">Club &amp; HS Coaches</div>
+          <p class="who-body">Make objective lineup decisions. Know who's producing before you make a substitution. Walk into every timeout with the answer already in your hand.</p>
+        </div>
+        <div class="who-card reveal reveal-delay-1">
+          <div class="who-icon">🏢</div>
+          <div class="who-title">Club Directors</div>
+          <p class="who-body">Give every coach on your staff access to the same powerful analytics. Standardize how your program tracks performance. Build a culture that runs on data.</p>
+        </div>
+        <div class="who-card reveal reveal-delay-2">
+          <div class="who-icon">⭐</div>
+          <div class="who-title">Recruiting Athletes</div>
+          <p class="who-body">PIR builds a verifiable, objective record of production over time. Show recruiters real performance data — not just highlight reels.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ——— PRICING ——— -->
+  <section class="pricing-section" id="pricing">
+    <div class="section">
+      <div class="section-eyebrow reveal">Pricing</div>
+      <h2 class="section-title reveal">Start free.<br><em>No commitment.</em></h2>
+      <p class="section-sub reveal reveal-delay-1">Your first three matches are free. No credit card required. One plan unlocks everything.</p>
+
+      <div class="pricing-grid">
+        <div class="price-card reveal reveal-delay-1">
+          <div class="price-name">Free</div>
+          <div class="price-amount">$0</div>
+          <p class="price-desc">Get started immediately. No card required.</p>
+          <ul class="price-list">
+            <li>3 full matches</li>
+            <li>Live PIR rankings</li>
+            <li>Basic stat tracking</li>
+            <li>1 team</li>
+          </ul>
+        </div>
+        <div class="price-card featured reveal reveal-delay-2">
+          <div class="featured-tag">Most Popular</div>
+          <div class="price-name">Pro</div>
+          <div class="price-amount"><sup>$</sup>12<span class="price-period">.99/mo</span></div>
+          <p class="price-desc">Unlimited matches, full AI features, complete PIR history.</p>
+          <ul class="price-list">
+            <li>Unlimited matches</li>
+            <li>Winning Formula (AI)</li>
+            <li>Timeout Insights (AI)</li>
+            <li>Full PIR history + breakdown</li>
+            <li>Athlete roster linking</li>
+            <li>Up to 3 teams</li>
+          </ul>
+          <div class="price-addon"><strong>+ $4.99/mo</strong> per additional team</div>
+
+          <div style="margin-top:24px;padding-top:24px;border-top:1px solid var(--border);">
+            <div style="font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--blue);margin-bottom:12px;">Yearly Plan</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+              <span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:32px;color:var(--text);">$99.99<span style="font-size:14px;font-weight:400;color:var(--muted);">/year</span></span>
+              <span style="font-size:11px;font-weight:700;background:rgba(0,200,100,0.12);border:1px solid rgba(0,200,100,0.25);color:#00C864;padding:3px 10px;border-radius:100px;letter-spacing:0.08em;">SAVE 36%</span>
+            </div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.5;">First-time subscribers only. <span style="text-decoration:line-through;color:var(--muted2);">$129.99/yr</span> regular price.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ——— CTA ——— -->
+  <section class="cta-section">
+    <div class="cta-glow"></div>
+    <div class="cta-inner">
+      <h2 class="reveal">More time coaching.<br><em>Better information</em><br>to coach with.</h2>
+      <p class="reveal reveal-delay-1">Download free. Your first three matches are on us.</p>
+      <div class="hero-btns reveal reveal-delay-2">
+        <a class="btn-store btn-apple" href="https://apps.apple.com/us/app/formula-by-prv8/id6759474412" target="_blank" rel="noopener">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none"><path d="M17.05 12.67c0-2.49 2.04-3.68 2.13-3.74-1.16-1.7-2.97-1.93-3.61-1.96-1.54-.16-3 .9-3.78.9-.77 0-1.96-.88-3.23-.85-1.66.02-3.19.97-4.04 2.45-1.72 2.98-.44 7.4 1.24 9.82.82 1.18 1.8 2.5 3.07 2.45 1.23-.05 1.7-.8 3.19-.8 1.48 0 1.91.8 3.22.78 1.32-.02 2.16-1.22 2.97-2.41.93-1.38 1.32-2.71 1.34-2.78-.03-.01-2.5-1.86-2.5-3.86z" fill="currentColor"/><path d="M14.6 5.27c.68-.84 1.14-2 1.02-3.16-1 .04-2.2.67-2.91 1.49-.64.74-1.2 1.93-1.05 3.07 1.11.08 2.26-.57 2.94-1.4z" fill="currentColor"/></svg>
+          <div class="btn-text-wrap">
+            <span class="btn-label">Download on the</span>
+            <span class="btn-name">App Store</span>
+          </div>
+        </a>
+        <a class="btn-store btn-google" href="https://play.google.com/store/apps/details?id=com.prv8.formula" target="_blank" rel="noopener">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none"><path d="M4.27 3.54C4 3.9 3.87 4.43 3.87 5.13v13.74c0 .7.13 1.23.42 1.59l.08.08 7.69-7.69v-.18L4.35 3.46l-.08.08z" fill="#007BFF"/><path d="M14.62 15.42l-2.57-2.57v-.18l2.57-2.57.06.03 3.04 1.73c.87.49.87 1.3 0 1.8l-3.04 1.73-.06.03z" fill="#fff"/><path d="M14.68 15.39L12.06 12.8 4.27 20.59c.29.3.76.34 1.29.04l9.12-5.24" fill="#fff" opacity=".85"/><path d="M14.68 10.61L5.56 5.37C5.03 5.07 4.56 5.11 4.27 5.41l7.79 7.79 2.62-2.59z" fill="#fff" opacity=".85"/></svg>
+          <div class="btn-text-wrap">
+            <span class="btn-label">Get it on</span>
+            <span class="btn-name">Google Play</span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ——— FOOTER ——— -->
+  <footer>
+    <div class="footer-logo">FORMULA <span style="font-size:11px;font-weight:400;color:var(--muted2);letter-spacing:0.04em;margin-left:10px;">by PRV8</span></div>
+    <ul class="footer-links">
+      <li><a href="mailto:support@prv8.app">Support</a></li>
+      <li><a href="/privacy">Privacy Policy</a></li>
+      <li><a href="/terms">Terms of Use</a></li>
+    </ul>
+    <p class="footer-copy">© 2026 PRV8, LLC. All rights reserved.</p>
+  </footer>
+
+  <script>
+    // Scroll reveal
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // Timeout timer animation
+    let timeoutSeconds = 60;
+    const timerEl = document.querySelector('.timer');
+    if (timerEl) {
+      setInterval(() => {
+        if (timeoutSeconds > 0) timeoutSeconds--;
+        const m = Math.floor(timeoutSeconds / 60);
+        const s = timeoutSeconds % 60;
+        timerEl.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+        if (timeoutSeconds <= 10) timerEl.style.color = '#FF5050';
+      }, 1000);
+    }
+  </script>
+
+</body>
+</html>

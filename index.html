@@ -28,6 +28,10 @@
     30%  { transform: scale(1.3); color: #9ca3af; }
     100% { transform: scale(1);   color: inherit; }
   }
+  @keyframes scoreFloat {
+    0%   { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-24px); }
+  }
   input, select, button { font-family: inherit; }
   @keyframes pulse { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
 </style>
@@ -81,6 +85,15 @@ const SERVE_TIER_WEIGHTS = { 1: 0.40, 2: 0.15, 3: -0.05 };
 // Reception quality weights (3=perfect, 0=error)
 const RECEPTION_TIER_WEIGHTS = { 3: 0.35, 2: 0.15, 1: -0.15, 0: 0.0 };
 
+// Per-category minimum action counts before a PER-SET Winning Formula value is a real signal.
+// Below the floor the category reads "building…" instead of a misleading 1.000/0.000.
+// Tune here. NOTE: aggregate computeWinningFormula (across sets) ignores _ready entirely.
+const MIN_ACTIONS = { attack: 5, serve: 4, reception: 4, block: 4, defense: 4 };
+
+// True if a per-set category has enough actions this set to be trusted.
+// Defaults to true when no _ready map is present (e.g. empty {} when there's no set).
+const isCategoryReady = (vars, name) => (vars && vars._ready) ? vars._ready[name] !== false : true;
+
 // Compute 10 formula variables from a set's events
 const computeFormulaRow = (set) => {
   let kills = 0, attErr = 0, attBlk = 0, aces = 0, sErr = 0, sInW = 0;
@@ -103,6 +116,22 @@ const computeFormulaRow = (set) => {
     }
   }
   const totalAtt = kills + attErr + attBlk;
+  // Per-category action counts (denominators) for the min-data floor.
+  const recAttempts = totalRec + recErr;
+  const blockAttempts = stuffBlk + blkTouch;
+  const defActions = digs + covers;
+  const _ready = {
+    hitting_eff: totalAtt >= MIN_ACTIONS.attack,
+    kill_rate: totalAtt >= MIN_ACTIONS.attack,
+    serve_pressure: totalServes >= MIN_ACTIONS.serve,
+    ace_error_ratio: totalServes >= MIN_ACTIONS.serve,
+    reception_eff: recAttempts >= MIN_ACTIONS.reception,
+    reception_error_rate: recAttempts >= MIN_ACTIONS.reception,
+    stuff_block_rate: blockAttempts >= MIN_ACTIONS.block,
+    block_touch_rate: blockAttempts >= MIN_ACTIONS.block,
+    dig_rate: defActions >= MIN_ACTIONS.defense,
+    cover_rate: defActions >= MIN_ACTIONS.defense,
+  };
   return {
     hitting_eff: totalAtt > 0 ? (kills - attErr - attBlk) / totalAtt : 0,
     kill_rate: totalAtt > 0 ? kills / totalAtt : 0,
@@ -114,6 +143,7 @@ const computeFormulaRow = (set) => {
     block_touch_rate: blkTouch,
     dig_rate: digs,
     cover_rate: covers,
+    _ready,
   };
 };
 
@@ -680,8 +710,10 @@ function VolleyballStats() {
   const [toTimer, setToTimer] = useState({ running: false, seconds: 0, total: 0 });
   const toTimerRef = useRef(null);
   const [showRotationFix, setShowRotationFix] = useState(false); // manual rotation overlay
+  const [cachedTimeoutData, setCachedTimeoutData] = useState(null); // pre-computed timeout analysis
   const [scorePulse, setScorePulse] = useState(null); // "us" | "them" | null
   const scorePulseTimerRef = useRef(null);
+  const [scoreIndicator, setScoreIndicator] = useState(null); // { side: "us"|"them", delta: +1|-1 }
   const [showScoreEdit, setShowScoreEdit] = useState(false);
   const [editScoreUs, setEditScoreUs] = useState(0);
   const [editScoreThem, setEditScoreThem] = useState(0);
@@ -725,8 +757,8 @@ function VolleyballStats() {
   useEffect(() => {
     if (!currentMatch?.id || screen !== "match") return;
     if (!sessionRestoredRef.current) return; // don't write during restore
-    queueSessionWrite({ tab, rallyPhase, currentSetIdx, selectedPlayer, assistPrompt: assistPrompt || null });
-  }, [tab, rallyPhase, currentSetIdx, selectedPlayer, assistPrompt, screen, currentMatch?.id]);
+    queueSessionWrite({ tab, rallyPhase, currentSetIdx, selectedPlayer, assistPrompt: assistPrompt || null, scoutPlayerNum: scoutPlayerNum || null, scoutView, scoutNumbered });
+  }, [tab, rallyPhase, currentSetIdx, selectedPlayer, assistPrompt, screen, currentMatch?.id, scoutPlayerNum, scoutView, scoutNumbered]);
 
   useEffect(() => {
     if (!currentMatch?.id || screen !== "match") return;
@@ -1288,6 +1320,11 @@ function VolleyballStats() {
     return pid === lib1 || pid === lib2;
   };
 
+  // Eligible to be the attack-feed / RIDE target: primary attackers only (exclude S/L/DS).
+  // Position-ineligible players can still hold top PIR and surface on non-attack lines.
+  const isRideEligible = (id, set) =>
+    !["S", "L", "DS"].includes(getEffectivePosition(id)) && !isLiberoId(id, set);
+
   // Determine which player should be in for a given MB in the back row
   const getBackRowSubFor = (set, mbId, zone) => {
     if (!mbId) return mbId;
@@ -1458,7 +1495,8 @@ function VolleyballStats() {
     if (!showScoreEdit) {
       clearTimeout(scorePulseTimerRef.current);
       setScorePulse(forUs ? "us" : "them");
-      scorePulseTimerRef.current = setTimeout(() => setScorePulse(null), 600);
+      setScoreIndicator({ side: forUs ? "us" : "them", delta: 1, key: Date.now() });
+      scorePulseTimerRef.current = setTimeout(() => { setScorePulse(null); setScoreIndicator(null); }, 700);
     }
   };
 
@@ -1584,7 +1622,11 @@ function VolleyballStats() {
     if (last._undoScore) {
       clearTimeout(scorePulseTimerRef.current);
       setScorePulse("undo");
-      scorePulseTimerRef.current = setTimeout(() => setScorePulse(null), 600);
+      // Figure out which side lost a point (compare current vs restored)
+      const curSet = getCurrentSet();
+      const undoSide = (curSet?.ourScore || 0) > last._undoScore.ourScore ? "us" : "them";
+      setScoreIndicator({ side: undoSide, delta: -1, key: Date.now() });
+      scorePulseTimerRef.current = setTimeout(() => { setScorePulse(null); setScoreIndicator(null); }, 700);
     }
 
     setUndoStack((prev) => prev.slice(0, -1));
@@ -1905,24 +1947,35 @@ function VolleyballStats() {
     const scoreDiff = (setData?.ourScore || 0) - (setData?.theirScore || 0);
     const matchSetsWon = ((matchData?.sets||[])).filter((s) => s.complete && s.ourScore > s.theirScore).length;
     const matchSetsLost = ((matchData?.sets||[])).filter((s) => s.complete && s.ourScore < s.theirScore).length;
-    if (fa.hasEnoughData) {
-      const highImpact = fa.variables.filter(v => v.priorityZone === "high_impact");
-      const onTarget = fa.variables.filter(v => v.priorityZone === "on_target");
-      if (highImpact.length > 0) { const top = highImpact[0]; const curr = currentVars[top.name]; const isBelow = top.name === "reception_error_rate" ? curr > top.threshold : curr < top.threshold; if (isBelow) sug.push(`${top.displayName} is below your winning threshold of ${top.format(top.threshold)} — this is your top priority.`); }
-      if (onTarget.length > 0) { const best = onTarget[0]; const curr = currentVars[best.name]; const isAbove = best.name === "reception_error_rate" ? curr < best.threshold : curr > best.threshold; if (isAbove) sug.push(`${best.displayName} is above target — keep riding this strength.`); }
+    const ahead = scoreDiff > 0;
+    const bigLead = scoreDiff >= 5;
+    const pirById = {}; for (const pp of playerPIRs) pirById[pp.id] = pp.pir;
+    const topCat = (p) => { const c = Object.entries(p.breakdown).filter(([,v]) => v !== 0).sort(([,a],[,b]) => b - a)[0]; return c ? ` (${c[0]})` : ""; };
+    const weakCat = (p) => { const c = Object.entries(p.breakdown).filter(([,v]) => v < 0).sort(([,a],[,b]) => a - b)[0]; return c ? ` (${c[0]} ${c[1].toFixed(1)})` : ""; };
+    // RIDE — primary go-to is the highest-PIR attack-eligible player (setters/liberos/DS excluded); only feed positive-PIR players
+    const rideP = playerPIRs.find((p) => isRideEligible(p.id, setData));
+    let ride = null;
+    if (rideP && rideP.pir > 0 && rideP.actions >= 3) ride = `🔥 ${rideP.name} led at +${rideP.pir.toFixed(2)}${topCat(rideP)} — keep getting them touches.`;
+    else { const hot = topH.find((h) => h.pct !== null && h.pct > 0.3 && h.att >= 3 && (pirById[h.id] ?? 0) > 0 && isRideEligible(h.id, setData)); if (hot) ride = `${hot.name} hit .${Math.round(hot.pct*1000).toString().padStart(3,"0")} — keep running plays through them.`; }
+    // FIX — single most useful corrective
+    let fix = null;
+    if (!ahead && fa.hasEnoughData) { const highImpact = fa.variables.filter(v => v.priorityZone === "high_impact"); if (highImpact.length > 0) { const top = highImpact[0]; const curr = currentVars[top.name]; const isBelow = top.name === "reception_error_rate" ? curr > top.threshold : curr < top.threshold; if (isBelow && isCategoryReady(currentVars, top.name)) fix = `${top.displayName} below your winning threshold of ${top.format(top.threshold)} — top priority.`; } }
+    if (!fix && worstPlayer && worstPlayer.pir < -0.5 && worstPlayer.actions >= 3) fix = `⚠️ ${worstPlayer.name} at ${worstPlayer.pir.toFixed(2)} PIR${weakCat(worstPlayer)} — fewer sets or a sub here.`;
+    if (!fix && (st.serve_error||0) > (st.ace||0) + 1) fix = "Serve errors exceed aces — go placement-first from the line.";
+    if (!fix) { const cold = topH.find((h) => h.pct !== null && h.pct < 0 && h.att >= 3); if (cold) fix = `${cold.name} forcing it (${cold.k}K/${cold.e}E) — redirect sets to balance the attack.`; }
+    if (!fix && !bigLead) {
+      if (kPct < 0.10 && att > 5) fix = "Attack under .100 — work middles and quicks for better pin angles.";
+      else if (kPct < 0.20 && att > 5) fix = "Hitting under .200 — spread the offense to open lanes.";
+      else if ((st.ball_error||0) >= 3) fix = `${st.ball_error} ball-handling errors — clean up first contacts.`;
+      else if ((st.dig||0) < 3 && (setData?.theirScore||0) >= 10) fix = "Low dig count — reset defensive base positions.";
+      else if ((st.stuff_block||0) === 0 && (setData?.theirScore||0) >= 10) fix = "No stuff blocks — adjust block assignments or close the seam.";
     }
-    if (kPct < 0.10 && att > 5) sug.push("Attack efficiency below .100 — try working middles and quicks to create better pin angles.");
-    else if (kPct < 0.20 && att > 5) sug.push("Hitting below .200 — spreading the offense can pull their block and open lanes.");
-    if ((st.serve_error||0) > (st.ace||0) + 1) sug.push("Serve errors exceed aces — shifting to placement-first serving could flip this margin.");
-    if ((st.ball_error||0) >= 3) sug.push(`${st.ball_error} ball handling errors — focusing on clean first contacts will tighten the system.`);
-    if (bestPlayer && bestPlayer.pir > 0 && bestPlayer.actions >= 3) sug.push(`🔥 ${bestPlayer.name} leading the way at +${bestPlayer.pir.toFixed(2)} — look to keep getting them touches.`);
-    if (worstPlayer && worstPlayer.pir < -0.5 && worstPlayer.actions >= 3) sug.push(`⚠️ ${worstPlayer.name} at ${worstPlayer.pir.toFixed(2)} PIR — consider a role adjustment or a breather.`);
-    const hot = topH.find((h) => h.pct !== null && h.pct > 0.3 && h.att >= 3 && (!bestPlayer || h.id !== bestPlayer.id));
-    if (hot) sug.push(`${hot.name} hitting .${Math.round(hot.pct*1000).toString().padStart(3,"0")} — keep running plays through them.`);
-    const cold = topH.find((h) => h.pct !== null && h.pct < 0 && h.att >= 3 && (!worstPlayer || h.id !== worstPlayer.id));
-    if (cold) sug.push(`${cold.name} at negative efficiency (${cold.k}K/${cold.e}E) — consider redirecting sets to balance the attack.`);
-    if ((st.dig||0) < 3 && (setData?.theirScore||0) >= 10) sug.push("Low dig count — reviewing defensive base positions could create more touches.");
-    if ((st.stuff_block||0) === 0 && (setData?.theirScore||0) >= 10) sug.push("No stuff blocks yet — consider adjusting block assignments or closing the seam.");
+    // CONTEXT — one match-level line (this set is already complete)
+    let ctx = null;
+    if (matchSetsLost > matchSetsWon && ((matchData?.sets||[])).length > 1) ctx = "Down in the match — carry these into the next set.";
+    else if (scoreDiff >= 5) ctx = "Took that set comfortably — keep doing what works.";
+    else if (scoreDiff <= -5) ctx = "Lost that one big — a sub or serve change could shift the next.";
+    for (const line of [ride, fix, ctx]) if (line) sug.push(line);
     if (sug.length === 0) sug.push("Keep tracking — every stat builds the picture.");
     return sug;
   };
@@ -1939,13 +1992,16 @@ function VolleyballStats() {
     const cv = computeFormulaRow(setData);
     const significant = fa.variables.filter(v => v.threshold !== null && v.priorityZone !== "low_relationship");
     if (significant.length === 0) return null;
-    let above = 0;
+    let above = 0, total = 0;
     for (const v of significant) {
+      if (!isCategoryReady(cv, v.name)) continue; // not enough data this set — not a signal
+      total++;
       const val = cv[v.name] ?? 0;
       const isInverse = v.name === "reception_error_rate";
       if (isInverse ? val <= v.threshold : val >= v.threshold) above++;
     }
-    return { above, total: significant.length, pct: Math.round((above / significant.length) * 100) };
+    if (total === 0) return null; // nothing reliable yet this set — hide the badge
+    return { above, total, pct: Math.round((above / total) * 100) };
   };
 
   // Timeout countdown timer
@@ -1976,6 +2032,81 @@ function VolleyballStats() {
     if (toTimerRef.current) clearTimeout(toTimerRef.current);
     setToTimer({ running: false, seconds: 0, total: 0 });
   };
+
+  // ── TIMEOUT PRE-ANALYSIS CACHE ──────────────────────
+  // Recompute after every point so timeout opens instantly
+  useEffect(() => {
+    const set = getCurrentSet();
+    if (!set || !currentMatch) { setCachedTimeoutData(null); return; }
+    const rosterArr = ((currentMatch.roster||[])).filter((p) => p.number);
+    try {
+      const st = getSetTotals(set);
+      const att = (st.kill||0)+(st.attack_error||0)+(st.attack_blocked||0);
+      const kPct = att > 0 ? ((st.kill||0)-(st.attack_error||0)-(st.attack_blocked||0))/att : 0;
+      const mt = getMatchTotals();
+      const mAtt = (mt.kill||0)+(mt.attack_error||0)+(mt.attack_blocked||0);
+      const mKPct = mAtt > 0 ? ((mt.kill||0)-(mt.attack_error||0)-(mt.attack_blocked||0))/mAtt : 0;
+      const topH = rosterArr.map((p) => {
+        const ps = getPlayerSetStats(p.id, set);
+        const a = (ps.kill||0)+(ps.attack_error||0)+(ps.attack_blocked||0);
+        return { name: p.name?.split(" ")[0]||`#${p.number}`, num: p.number, id: p.id, pos: p.position || "", k: ps.kill||0, e: ps.attack_error||0, att: a, pct: a > 0 ? ((ps.kill||0)-(ps.attack_error||0)-(ps.attack_blocked||0))/a : null };
+      }).filter((h) => h.att > 0).sort((a,b) => b.k - a.k).slice(0, 4);
+      const mult = getFormulaMultipliers();
+      const onCourtSet = new Set(Object.values(set.currentLineup || {}));
+      if (set.liberoIn && set.libero1Id) onCourtSet.add(set.libero1Id);
+      if (set.libero2In && set.libero2Id) onCourtSet.add(set.libero2Id);
+      const playerPIRs = rosterArr.map((p) => {
+        if (!onCourtSet.has(p.id)) return null;
+        const impact = calculatePlayerImpact(set.events || [], p.id, mult);
+        const ps = getPlayerSetStats(p.id, set);
+        const totalActions = Object.values(ps).reduce((s, v) => s + v, 0);
+        return { id: p.id, name: p.name?.split(" ")[0] || `#${p.number}`, num: p.number, pos: p.position || "", pir: impact.total, breakdown: impact.breakdown, actions: totalActions, stats: ps };
+      }).filter(Boolean).sort((a, b) => b.pir - a.pir);
+      const fa = formulaAnalysis;
+      const currentVars = computeFormulaRow(set);
+      const sug = [];
+      const scoreDiff = (set.ourScore || 0) - (set.theirScore || 0);
+      const matchSetsWon = ((currentMatch.sets||[])).filter((s) => s.complete && s.ourScore > s.theirScore).length;
+      const matchSetsLost = ((currentMatch.sets||[])).filter((s) => s.complete && s.ourScore < s.theirScore).length;
+      const ahead = scoreDiff > 0;
+      const bigLead = scoreDiff >= 5;
+      const bestPlayer = playerPIRs.length > 0 ? playerPIRs[0] : null;
+      const worstPlayer = playerPIRs.length > 1 ? playerPIRs[playerPIRs.length - 1] : null;
+      const pirById = {}; for (const pp of playerPIRs) pirById[pp.id] = pp.pir;
+      const topCat = (p) => { const c = Object.entries(p.breakdown).filter(([,v]) => v !== 0).sort(([,a],[,b]) => b - a)[0]; return c ? ` (${c[0]})` : ""; };
+      const weakCat = (p) => { const c = Object.entries(p.breakdown).filter(([,v]) => v < 0).sort(([,a],[,b]) => a - b)[0]; return c ? ` (${c[0]} ${c[1].toFixed(1)})` : ""; };
+      // RIDE — primary go-to is the highest-PIR attack-eligible on-court player (setters/liberos/DS excluded); never feed a negative-PIR player
+      const rideP = playerPIRs.find((p) => isRideEligible(p.id, set));
+      let ride = null;
+      if (rideP && rideP.pir > 0 && rideP.actions >= 3) ride = `🔥 ${rideP.name} leading at +${rideP.pir.toFixed(2)}${topCat(rideP)} — keep getting them touches.`;
+      else { const hot = topH.find((h) => h.pct !== null && h.pct > 0.3 && h.att >= 3 && (pirById[h.id] ?? 0) > 0 && isRideEligible(h.id, set)); if (hot) ride = `${hot.name} hitting .${Math.round(hot.pct*1000).toString().padStart(3,"0")} — keep running plays through them.`; }
+      // FIX — single most useful corrective
+      let fix = null;
+      if (!ahead && fa.hasEnoughData) { const highImpact = fa.variables.filter(v => v.priorityZone === "high_impact"); if (highImpact.length > 0) { const top = highImpact[0]; const curr = currentVars[top.name]; const isBelow = top.name === "reception_error_rate" ? curr > top.threshold : curr < top.threshold; if (isBelow && isCategoryReady(currentVars, top.name)) fix = `${top.displayName} below your winning threshold of ${top.format(top.threshold)} — top priority.`; } }
+      if (!fix && worstPlayer && worstPlayer.pir < -0.5 && worstPlayer.actions >= 3) fix = `⚠️ ${worstPlayer.name} at ${worstPlayer.pir.toFixed(2)} PIR${weakCat(worstPlayer)} — fewer sets or a sub here.`;
+      if (!fix && (st.serve_error||0) > (st.ace||0) + 1) fix = "Serve errors exceed aces — go placement-first from the line.";
+      if (!fix) { const cold = topH.find((h) => h.pct !== null && h.pct < 0 && h.att >= 3); if (cold) fix = `${cold.name} forcing it (${cold.k}K/${cold.e}E) — redirect sets to balance the attack.`; }
+      if (!fix && !bigLead) {
+        if (kPct < 0.10 && att > 5) fix = "Attack under .100 — work middles and quicks for better pin angles.";
+        else if (kPct < 0.20 && att > 5) fix = "Hitting under .200 — spread the offense to open lanes.";
+        else if ((st.ball_error||0) >= 3) fix = `${st.ball_error} ball-handling errors — clean up first contacts.`;
+        else if ((st.dig||0) < 3 && (set.theirScore||0) >= 10) fix = "Low dig count — reset defensive base positions.";
+        else if ((st.stuff_block||0) === 0 && (set.theirScore||0) >= 10) fix = "No stuff blocks — adjust block assignments or close the seam.";
+      }
+      // CONTEXT — one score line
+      let ctx = null;
+      const _tgt2 = getSetTargetScore(set); const _our = _tgt2 - (set.ourScore || 0); const _their = _tgt2 - (set.theirScore || 0);
+      if (_their <= 3 && _their > 0 && _their < _our) ctx = `Opponent ${_their} from the set — tighten up now.`;
+      else if (_our <= 3 && _our > 0) ctx = `${_our} point${_our === 1 ? "" : "s"} from the set — finish strong.`;
+      else if (bigLead) ctx = "Commanding lead — keep doing what works.";
+      else if (scoreDiff <= -5) ctx = "Down 5+ — a sub or serve change could shift momentum.";
+      else if (scoreDiff <= -3) ctx = "Down 3 — stay disciplined on serve and pass to set up a run.";
+      for (const line of [ride, fix, ctx]) if (line) sug.push(line);
+      if (sug.length === 0) sug.push("Keep tracking — every stat builds the picture.");
+      const _tgt = getSetTargetScore(set);
+      setCachedTimeoutData({ st, att, kPct, mt, mAtt, mKPct, topH, playerPIRs, fa, currentVars, sug, scoreDiff, matchSetsWon, matchSetsLost, targetScore: _tgt, ts: Date.now() });
+    } catch (e) { console.warn("[TIMEOUT CACHE] Error:", e); }
+  }, [currentMatch?.sets?.[currentSetIdx]?.ourScore, currentMatch?.sets?.[currentSetIdx]?.theirScore, currentMatch?.sets?.[currentSetIdx]?.events?.length, currentSetIdx]);
 
   // ═══════════════════════════════════════════════════
   // RENDER
@@ -2432,10 +2563,10 @@ function VolleyballStats() {
                           dig: ((stats.dig || 0) + (stats.cvr || 0)) / d, bs: (stats.stuff_block || 0) / d,
                           be: (stats.ball_error || 0) / d, sets };
                       })
-                      .sort((a, b) => b.pis - a.pis)
+                      .sort((a, b) => { const pa = playerSeasonPassing[a.pid], pb = playerSeasonPassing[b.pid]; const av = pa && pa.total > 0 ? pa.qualitySum / pa.total : -Infinity; const bv = pb && pb.total > 0 ? pb.qualitySum / pb.total : -Infinity; return bv - av; })
                       .map((p) => {
                         const isAvg = seasonStatsMode === "perSet";
-                        const fmt = (v) => isAvg ? (v > 0 ? v.toFixed(1) : "-") : (v > 0 ? Math.round(v) : "-");
+                        const fmt = (v) => isAvg ? v.toFixed(1) : Math.round(v);
                         return (
                         <tr key={p.pid}>
                           <td style={{ ...S.std, fontWeight: 700, whiteSpace: "nowrap", textAlign: "left" }}>{p.pName} <span style={{ opacity: 0.4, fontWeight: 400 }}>#{p.pNum}</span></td>
@@ -2714,6 +2845,9 @@ function VolleyballStats() {
                               if (ls.prevRallyPhase) setPrevRallyPhase(ls.prevRallyPhase);
                               if (ls.prevRally) setPrevRally(ls.prevRally);
                               if (ls.assistPrompt) setAssistPrompt(ls.assistPrompt);
+                              if (ls.scoutPlayerNum) setScoutPlayerNum(ls.scoutPlayerNum);
+                              if (ls.scoutView) setScoutView(ls.scoutView);
+                              if (ls.scoutNumbered !== undefined) setScoutNumbered(ls.scoutNumbered);
                               console.log("[liveSession] Restored session state for match:", repairedMatch.id);
                             } else {
                               setTab("court");
@@ -2988,12 +3122,12 @@ function VolleyballStats() {
                 </div>
               </div>
               <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-                {mvpStats.kill > 0 && <span style={{ fontSize: 11, color: "#22c55e", fontWeight: 700 }}>{mvpStats.kill}K</span>}
-                {mvpStats.ace > 0 && <span style={{ fontSize: 11, color: "#007bff", fontWeight: 700 }}>{mvpStats.ace}A</span>}
-                {mvpStats.stuff_block > 0 && <span style={{ fontSize: 11, color: "#22c55e", fontWeight: 700 }}>{mvpStats.stuff_block}SB</span>}
-                {((mvpStats.dig || 0) + (mvpStats.cvr || 0)) > 0 && <span style={{ fontSize: 11, fontWeight: 700 }}>{(mvpStats.dig || 0) + (mvpStats.cvr || 0)}D</span>}
-                {mvpStats.assist > 0 && <span style={{ fontSize: 11, color: "#5ba3ff", fontWeight: 700 }}>{mvpStats.assist}AS</span>}
-                {mvpStats.block > 0 && <span style={{ fontSize: 11, fontWeight: 700 }}>{mvpStats.block}BT</span>}
+                {mvpStats.kill != null && <span style={{ fontSize: 11, color: "#22c55e", fontWeight: 700 }}>{mvpStats.kill}K</span>}
+                {mvpStats.ace != null && <span style={{ fontSize: 11, color: "#007bff", fontWeight: 700 }}>{mvpStats.ace}A</span>}
+                {mvpStats.stuff_block != null && <span style={{ fontSize: 11, color: "#22c55e", fontWeight: 700 }}>{mvpStats.stuff_block}SB</span>}
+                {((mvpStats.dig || 0) + (mvpStats.cvr || 0)) != null && <span style={{ fontSize: 11, fontWeight: 700 }}>{(mvpStats.dig || 0) + (mvpStats.cvr || 0)}D</span>}
+                {mvpStats.assist != null && <span style={{ fontSize: 11, color: "#5ba3ff", fontWeight: 700 }}>{mvpStats.assist}AS</span>}
+                {mvpStats.block != null && <span style={{ fontSize: 11, fontWeight: 700 }}>{mvpStats.block}BT</span>}
               </div>
               {/* Category breakdown bars */}
               <div style={{ display: "flex", gap: 2, height: 8, marginTop: 8 }}>
@@ -3402,6 +3536,40 @@ function VolleyballStats() {
                 </div>
               </div>
             )}
+
+            {/* Opposite zone pair validation */}
+            {Object.keys(lineupSlots).length >= 6 && (() => {
+              const ZONE_PAIRS = [[1,4],[2,5],[3,6]];
+              const mismatches = ZONE_PAIRS.map(([a,b]) => {
+                const pA = lineupSlots[a] ? rosterPlayers.find(r => r.id === lineupSlots[a]) : null;
+                const pB = lineupSlots[b] ? rosterPlayers.find(r => r.id === lineupSlots[b]) : null;
+                if (!pA || !pB) return null;
+                const posA = lineupPositions[pA.id] || pA.position;
+                const posB = lineupPositions[pB.id] || pB.position;
+                if (posA === posB) return null;
+                return { zones: [a,b], posA, posB, nameA: pA.name?.split(" ")[0] || `#${pA.number}`, nameB: pB.name?.split(" ")[0] || `#${pB.number}` };
+              }).filter(Boolean);
+              return (
+                <div style={{ marginBottom: 12, padding: "8px 10px", borderRadius: 8, background: mismatches.length > 0 ? "#1a1708" : "#0a1a0a", border: `1px solid ${mismatches.length > 0 ? "#854d0e" : "#22c55e44"}` }}>
+                  {mismatches.length === 0 ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ color: "#22c55e", fontSize: 14 }}>✓</span>
+                      <span style={{ fontSize: 11, color: "#22c55e", fontWeight: 600 }}>Lineup valid — opposite zones match</span>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: "#eab308", marginBottom: 4, letterSpacing: 1 }}>⚠ POSITION MISMATCH</div>
+                      {mismatches.map((m, i) => (
+                        <div key={i} style={{ fontSize: 11, color: "#fbbf24", marginBottom: 2 }}>
+                          Zone {m.zones[0]}↔{m.zones[1]}: {m.nameA} ({m.posA}) vs {m.nameB} ({m.posB})
+                        </div>
+                      ))}
+                      <div style={{ fontSize: 9, color: "#9ca3af", marginTop: 4 }}>Opposite zones (1↔4, 2↔5, 3↔6) typically share the same position.</div>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Libero slots */}
             <div style={{ marginTop: 12, marginBottom: 12 }}>
@@ -4533,131 +4701,78 @@ function VolleyballStats() {
 
         {/* TIMEOUT OVERLAY */}
         {showTimeout && (() => {
-          // Current set stats
-          const st = getSetTotals(set);
-          const att = (st.kill||0)+(st.attack_error||0)+(st.attack_blocked||0);
-          const kPct = att > 0 ? ((st.kill||0)-(st.attack_error||0)-(st.attack_blocked||0))/att : 0;
-          // Full match stats
-          const mt = getMatchTotals();
-          const mAtt = (mt.kill||0)+(mt.attack_error||0)+(mt.attack_blocked||0);
-          const mKPct = mAtt > 0 ? ((mt.kill||0)-(mt.attack_error||0)-(mt.attack_blocked||0))/mAtt : 0;
-          const topH = rosterPlayers.map((p) => {
+          // Use pre-computed cache for instant display, fallback to live computation
+          const _c = cachedTimeoutData;
+          const st = _c?.st || getSetTotals(set);
+          const att = _c?.att ?? ((st.kill||0)+(st.attack_error||0)+(st.attack_blocked||0));
+          const kPct = _c?.kPct ?? (att > 0 ? ((st.kill||0)-(st.attack_error||0)-(st.attack_blocked||0))/att : 0);
+          const mt = _c?.mt || getMatchTotals();
+          const mAtt = _c?.mAtt ?? ((mt.kill||0)+(mt.attack_error||0)+(mt.attack_blocked||0));
+          const mKPct = _c?.mKPct ?? (mAtt > 0 ? ((mt.kill||0)-(mt.attack_error||0)-(mt.attack_blocked||0))/mAtt : 0);
+          const topH = _c?.topH || rosterPlayers.map((p) => {
             const ps = getPlayerSetStats(p.id, set);
             const a = (ps.kill||0)+(ps.attack_error||0)+(ps.attack_blocked||0);
             return { name: p.name?.split(" ")[0]||`#${p.number}`, num: p.number, id: p.id, pos: p.position || "", k: ps.kill||0, e: ps.attack_error||0, att: a, pct: a > 0 ? ((ps.kill||0)-(ps.attack_error||0)-(ps.attack_blocked||0))/a : null };
           }).filter((h) => h.att > 0).sort((a,b) => b.k - a.k).slice(0, 4);
-
-          // PIR for all on-court players
-          const mult = getFormulaMultipliers();
-          const onCourtIds = new Set(Object.values(set.currentLineup || {}));
-          // Add libero if active
-          if (set.liberoIn && set.libero1Id) onCourtIds.add(set.libero1Id);
-          if (set.libero2In && set.libero2Id) onCourtIds.add(set.libero2Id);
-          
-          const playerPIRs = rosterPlayers.map((p) => {
-            if (!onCourtIds.has(p.id)) return null;
-            const impact = calculatePlayerImpact(set.events || [], p.id, mult);
-            const ps = getPlayerSetStats(p.id, set);
-            const totalActions = Object.values(ps).reduce((s, v) => s + v, 0);
-            return {
-              id: p.id,
-              name: p.name?.split(" ")[0] || `#${p.number}`,
-              num: p.number,
-              pos: p.position || "",
-              pir: impact.total,
-              breakdown: impact.breakdown,
-              actions: totalActions,
-              stats: ps,
-            };
-          }).filter(Boolean).sort((a, b) => b.pir - a.pir);
-          
+          const playerPIRs = _c?.playerPIRs || (() => {
+            const mult = getFormulaMultipliers();
+            const oc = new Set(Object.values(set.currentLineup || {}));
+            if (set.liberoIn && set.libero1Id) oc.add(set.libero1Id);
+            if (set.libero2In && set.libero2Id) oc.add(set.libero2Id);
+            return rosterPlayers.map((p) => {
+              if (!oc.has(p.id)) return null;
+              const impact = calculatePlayerImpact(set.events || [], p.id, mult);
+              const ps = getPlayerSetStats(p.id, set);
+              const totalActions = Object.values(ps).reduce((s, v) => s + v, 0);
+              return { id: p.id, name: p.name?.split(" ")[0] || `#${p.number}`, num: p.number, pos: p.position || "", pir: impact.total, breakdown: impact.breakdown, actions: totalActions, stats: ps };
+            }).filter(Boolean).sort((a, b) => b.pir - a.pir);
+          })();
           const bestPlayer = playerPIRs.length > 0 ? playerPIRs[0] : null;
           const worstPlayer = playerPIRs.length > 1 ? playerPIRs[playerPIRs.length - 1] : null;
+          const fa = _c?.fa || formulaAnalysis;
+          const currentVars = _c?.currentVars || (set ? computeFormulaRow(set) : {});
+          const scoreDiff = _c?.scoreDiff ?? ((set?.ourScore || 0) - (set?.theirScore || 0));
+          const matchSetsWon = _c?.matchSetsWon ?? ((currentMatch.sets||[])).filter((s) => s.complete && s.ourScore > s.theirScore).length;
+          const matchSetsLost = _c?.matchSetsLost ?? ((currentMatch.sets||[])).filter((s) => s.complete && s.ourScore < s.theirScore).length;
 
-          // Formula comparison using new engine
-          const fa = formulaAnalysis;
-          const currentVars = set ? computeFormulaRow(set) : {};
-
-          // Build suggestions from match + formula context
-          const sug = [];
-          const scoreDiff = (set?.ourScore || 0) - (set?.theirScore || 0);
-          const matchSetsWon = ((currentMatch.sets||[])).filter((s) => s.complete && s.ourScore > s.theirScore).length;
-          const matchSetsLost = ((currentMatch.sets||[])).filter((s) => s.complete && s.ourScore < s.theirScore).length;
-
-          // Formula-driven suggestions
-          if (fa.hasEnoughData) {
-            const highImpact = fa.variables.filter(v => v.priorityZone === "high_impact");
-            const onTarget = fa.variables.filter(v => v.priorityZone === "on_target");
-            if (highImpact.length > 0) {
-              const top = highImpact[0];
-              const curr = currentVars[top.name];
-              const isBelow = top.name === "reception_error_rate" ? curr > top.threshold : curr < top.threshold;
-              if (isBelow) sug.push(`${top.displayName} is below your winning threshold of ${top.format(top.threshold)} — this is your top priority.`);
+          // Use cached suggestions or build fresh
+          const sug = _c?.sug || (() => {
+            const _s = [];
+            const ahead = scoreDiff > 0;
+            const bigLead = scoreDiff >= 5;
+            const pirById = {}; for (const pp of playerPIRs) pirById[pp.id] = pp.pir;
+            const topCat = (p) => { const c = Object.entries(p.breakdown).filter(([,v]) => v !== 0).sort(([,a],[,b]) => b - a)[0]; return c ? ` (${c[0]})` : ""; };
+            const weakCat = (p) => { const c = Object.entries(p.breakdown).filter(([,v]) => v < 0).sort(([,a],[,b]) => a - b)[0]; return c ? ` (${c[0]} ${c[1].toFixed(1)})` : ""; };
+            // RIDE — primary go-to is the highest-PIR attack-eligible on-court player (setters/liberos/DS excluded); never feed a negative-PIR player
+            const rideP = playerPIRs.find((p) => isRideEligible(p.id, set));
+            let ride = null;
+            if (rideP && rideP.pir > 0 && rideP.actions >= 3) ride = `🔥 ${rideP.name} leading at +${rideP.pir.toFixed(2)}${topCat(rideP)} — keep getting them touches.`;
+            else { const hot = topH.find((h) => h.pct !== null && h.pct > 0.3 && h.att >= 3 && (pirById[h.id] ?? 0) > 0 && isRideEligible(h.id, set)); if (hot) ride = `${hot.name} hitting .${Math.round(hot.pct*1000).toString().padStart(3,"0")} — keep running plays through them.`; }
+            // FIX — single most useful corrective
+            let fix = null;
+            if (!ahead && fa.hasEnoughData) { const highImpact = fa.variables.filter(v => v.priorityZone === "high_impact"); if (highImpact.length > 0) { const top = highImpact[0]; const curr = currentVars[top.name]; const isBelow = top.name === "reception_error_rate" ? curr > top.threshold : curr < top.threshold; if (isBelow && isCategoryReady(currentVars, top.name)) fix = `${top.displayName} below your winning threshold of ${top.format(top.threshold)} — top priority.`; } }
+            if (!fix && worstPlayer && worstPlayer.pir < -0.5 && worstPlayer.actions >= 3) fix = `⚠️ ${worstPlayer.name} at ${worstPlayer.pir.toFixed(2)} PIR${weakCat(worstPlayer)} — fewer sets or a sub here.`;
+            if (!fix && (st.serve_error||0) > (st.ace||0) + 1) fix = "Serve errors exceed aces — go placement-first from the line.";
+            if (!fix) { const cold = topH.find((h) => h.pct !== null && h.pct < 0 && h.att >= 3); if (cold) fix = `${cold.name} forcing it (${cold.k}K/${cold.e}E) — redirect sets to balance the attack.`; }
+            if (!fix && !bigLead) {
+              if (kPct < 0.10 && att > 5) fix = "Attack under .100 — work middles and quicks for better pin angles.";
+              else if (kPct < 0.20 && att > 5) fix = "Hitting under .200 — spread the offense to open lanes.";
+              else if ((st.ball_error||0) >= 3) fix = `${st.ball_error} ball-handling errors — clean up first contacts.`;
+              else if ((st.dig||0) < 3 && (set?.theirScore||0) >= 10) fix = "Low dig count — reset defensive base positions.";
+              else if ((st.stuff_block||0) === 0 && (set?.theirScore||0) >= 10) fix = "No stuff blocks — adjust block assignments or close the seam.";
             }
-            if (onTarget.length > 0) {
-              const best = onTarget[0];
-              const curr = currentVars[best.name];
-              const isAbove = best.name === "reception_error_rate" ? curr < best.threshold : curr > best.threshold;
-              if (isAbove) sug.push(`${best.displayName} is above target — keep riding this strength.`);
-            }
-          }
-
-          // Performance-driven suggestions
-          if (kPct < 0.10 && att > 5) sug.push("Attack efficiency below .100 — try working middles and quicks to create better pin angles.");
-          else if (kPct < 0.20 && att > 5) sug.push("Hitting below .200 — spreading the offense can pull their block and open lanes.");
-          if ((st.serve_error||0) > (st.ace||0) + 1) sug.push("Serve errors exceed aces — shifting to placement-first serving could flip this margin.");
-          if ((st.ball_error||0) >= 3) sug.push(`${st.ball_error} ball handling errors — focusing on clean first contacts will tighten the system.`);
-
-          // PIR-driven player suggestions
-          if (bestPlayer && bestPlayer.pir > 0 && bestPlayer.actions >= 3) {
-            const topCat = Object.entries(bestPlayer.breakdown).filter(([,v]) => v !== 0).sort(([,a],[,b]) => b - a)[0];
-            const catLabel = topCat ? ` (${topCat[0]})` : "";
-            sug.push(`🔥 ${bestPlayer.name} leading the way at +${bestPlayer.pir.toFixed(2)}${catLabel} — look to keep getting them touches.`);
-          }
-          if (worstPlayer && worstPlayer.pir < -0.5 && worstPlayer.actions >= 3) {
-            const weakCat = Object.entries(worstPlayer.breakdown).filter(([,v]) => v < 0).sort(([,a],[,b]) => a - b)[0];
-            const catLabel = weakCat ? ` (${weakCat[0]} ${weakCat[1].toFixed(1)})` : "";
-            sug.push(`⚠️ ${worstPlayer.name} at ${worstPlayer.pir.toFixed(2)} PIR${catLabel} — consider a role adjustment or a breather.`);
-          }
-          // Mid-tier players with specific category issues
-          for (const pp of playerPIRs) {
-            if (pp === bestPlayer || pp === worstPlayer) continue;
-            if (pp.breakdown.serving <= -1.0 && pp.actions >= 2) sug.push(`${pp.name} serve margin is negative (${pp.breakdown.serving.toFixed(1)}) — a shorter toss or more placement could help.`);
-            if (pp.breakdown.passing <= -1.0 && pp.actions >= 2) sug.push(`${pp.name} passing trending down (${pp.breakdown.passing.toFixed(1)}) — check court positioning and platform angle.`);
-          }
-          // Hot/cold hitter backup (non-PIR)
-          const hot = topH.find((h) => h.pct !== null && h.pct > 0.3 && h.att >= 3 && (!bestPlayer || h.id !== bestPlayer.id));
-          if (hot) sug.push(`${hot.name} hitting .${Math.round(hot.pct*1000).toString().padStart(3,"0")} — keep running plays through them.`);
-          const cold = topH.find((h) => h.pct !== null && h.pct < 0 && h.att >= 3 && (!worstPlayer || h.id !== worstPlayer.id));
-          if (cold) sug.push(`${cold.name} at negative efficiency (${cold.k}K/${cold.e}E) — consider redirecting sets to balance the attack.`);
-
-          // Score-driven suggestions (use relative points remaining)
-          const _targetScore = getSetTargetScore(set);
-          const _ourRemaining = _targetScore - (set?.ourScore || 0);
-          const _theirRemaining = _targetScore - (set?.theirScore || 0);
-          if (scoreDiff <= -5) sug.push("Down 5+ — a strategic sub or a change in serve strategy could shift momentum.");
-          else if (scoreDiff <= -3) sug.push("Down 3 — staying disciplined on serve and pass will set up a run.");
-          else if (scoreDiff >= 5 && _ourRemaining <= 5) sug.push("Commanding lead — stay aggressive, close it out.");
-          if (_ourRemaining <= 3 && _ourRemaining > 0) sug.push(`${_ourRemaining} point${_ourRemaining === 1 ? "" : "s"} from the set — finish strong.`);
-          if (_theirRemaining <= 3 && _theirRemaining > 0) sug.push(`Opponent ${_theirRemaining} from the set — tighten up now.`);
-
-          // Match context
-          if (matchSetsLost > matchSetsWon && ((currentMatch.sets||[])).length > 1) sug.push("Down in match — consider adjustments from earlier sets.");
-          if ((st.dig||0) < 3 && (set?.theirScore||0) >= 10) sug.push("Low dig count — reviewing defensive base positions could create more touches.");
-          if ((st.stuff_block||0) === 0 && (set?.theirScore||0) >= 10) sug.push("No stuff blocks yet — consider adjusting block assignments or closing the seam.");
-          if (sug.length === 0) sug.push("Keep tracking — every stat builds the picture.");
-
-          // Pre-formula context: add generic comparative insights
-          if (!fa.hasEnoughData) {
-            const totalPtsPlayed = (set?.ourScore || 0) + (set?.theirScore || 0);
-            if (totalPtsPlayed > 10) {
-              const sideoutPct = totalPtsPlayed > 0 ? Math.round(((set?.ourScore || 0) / totalPtsPlayed) * 100) : 0;
-              if (sideoutPct >= 55) sug.push(`Winning ${sideoutPct}% of total points — strong tempo, stay on it.`);
-              else if (sideoutPct <= 40) sug.push(`Only ${sideoutPct}% of total points — need a run. Consider lineup or serving changes.`);
-            }
-            const totalErrors = (st.attack_error||0) + (st.ball_error||0) + (st.serve_error||0);
-            if (totalErrors >= 5 && totalErrors > (st.kill||0)) sug.push(`${totalErrors} total errors exceed ${st.kill||0} kills — reducing unforced mistakes will tighten the gap.`);
-          }
+            // CONTEXT — one score line
+            let ctx = null;
+            const _tgt = getSetTargetScore(set); const _our = _tgt - (set?.ourScore || 0); const _their = _tgt - (set?.theirScore || 0);
+            if (_their <= 3 && _their > 0 && _their < _our) ctx = `Opponent ${_their} from the set — tighten up now.`;
+            else if (_our <= 3 && _our > 0) ctx = `${_our} point${_our === 1 ? "" : "s"} from the set — finish strong.`;
+            else if (bigLead) ctx = "Commanding lead — keep doing what works.";
+            else if (scoreDiff <= -5) ctx = "Down 5+ — a sub or serve change could shift momentum.";
+            else if (scoreDiff <= -3) ctx = "Down 3 — stay disciplined on serve and pass to set up a run.";
+            for (const line of [ride, fix, ctx]) if (line) _s.push(line);
+            if (_s.length === 0) _s.push("Keep tracking — every stat builds the picture.");
+            return _s;
+          })();
 
           return (
           <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.92)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -4728,13 +4843,14 @@ function VolleyballStats() {
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ fontSize: 10, fontWeight: 700, opacity: 0.5, marginBottom: 4, letterSpacing: 1 }}>VS FORMULA</div>
                   {fa.variables.filter(v => v.threshold !== null && v.priorityZone !== "low_relationship").slice(0, 4).map((v) => {
+                    const ready = isCategoryReady(currentVars, v.name);
                     const curr = currentVars[v.name] ?? 0;
                     const isInverse = v.name === "reception_error_rate";
                     const onTarget = isInverse ? curr <= v.threshold : curr >= v.threshold;
                     return (
                       <div key={v.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11, padding: "3px 0", borderBottom: "1px solid #1a1a24" }}>
                         <span style={{ fontWeight: 600, flex: 1 }}>{v.displayName}</span>
-                        <span style={{ fontWeight: 800, color: onTarget ? "#22c55e" : "#ef4444", marginRight: 6 }}>{v.format(curr)}</span>
+                        <span style={{ fontWeight: 800, color: !ready ? "#6b7280" : onTarget ? "#22c55e" : "#ef4444", marginRight: 6 }}>{ready ? v.format(curr) : "building…"}</span>
                         <span style={{ fontSize: 9, opacity: 0.4, minWidth: 50, textAlign: "right" }}>tgt {v.format(v.threshold)}</span>
                       </div>
                     );
@@ -4818,9 +4934,10 @@ function VolleyballStats() {
           </div>
           <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
             <div style={S.scoreBoard}>
-              <div style={S.teamCol}>
+              <div style={{ ...S.teamCol, position: "relative" }}>
                 <span style={S.teamLabel}>US</span>
                 <span style={{ ...S.bigScore, display: "inline-block", cursor: "pointer", animation: scorePulse === "us" ? "scorePulse 0.6s ease-out" : scorePulse === "undo" ? "scorePulseGrey 0.6s ease-out" : "none" }} onClick={() => { setEditScoreUs(set?.ourScore || 0); setEditScoreThem(set?.theirScore || 0); setShowScoreEdit(true); }}>{set?.ourScore || 0}</span>
+                {scoreIndicator?.side === "us" && <span key={scoreIndicator.key} style={{ position: "absolute", top: 4, right: -2, fontSize: 13, fontWeight: 900, color: scoreIndicator.delta > 0 ? "#22c55e" : "#9ca3af", animation: "scoreFloat 0.7s ease-out forwards", pointerEvents: "none" }}>{scoreIndicator.delta > 0 ? "+1" : "-1"}</span>}
               </div>
               <div style={S.setChip}>
                 S{set?.number || 1}
@@ -4832,9 +4949,10 @@ function VolleyballStats() {
                   })()}
                 </span>
               </div>
-              <div style={S.teamCol}>
+              <div style={{ ...S.teamCol, position: "relative" }}>
                 <span style={S.teamLabel}>{currentMatch.opponent?.slice(0, 5)?.toUpperCase() || "THEM"}</span>
                 <span style={{ ...S.bigScore, display: "inline-block", cursor: "pointer", animation: scorePulse === "them" ? "scorePulseRed 0.6s ease-out" : scorePulse === "undo" ? "scorePulseGrey 0.6s ease-out" : "none" }} onClick={() => { setEditScoreUs(set?.ourScore || 0); setEditScoreThem(set?.theirScore || 0); setShowScoreEdit(true); }}>{set?.theirScore || 0}</span>
+                {scoreIndicator?.side === "them" && <span key={scoreIndicator.key} style={{ position: "absolute", top: 4, left: -2, fontSize: 13, fontWeight: 900, color: scoreIndicator.delta > 0 ? "#ef4444" : "#9ca3af", animation: "scoreFloat 0.7s ease-out forwards", pointerEvents: "none" }}>{scoreIndicator.delta > 0 ? "+1" : "-1"}</span>}
               </div>
             </div>
           </div>
@@ -4983,6 +5101,39 @@ function VolleyballStats() {
                   })}
                 </div>
               </div>
+
+              {/* Opposite zone pair validation */}
+              {(() => {
+                const currentLineup = set?.currentLineup || {};
+                const ZONE_PAIRS = [[1,4],[2,5],[3,6]];
+                const mismatches = ZONE_PAIRS.map(([a,b]) => {
+                  const pidA = currentLineup[a]; const pidB = currentLineup[b];
+                  if (!pidA || !pidB) return null;
+                  const posA = getEffectivePosition(pidA); const posB = getEffectivePosition(pidB);
+                  if (posA === posB) return null;
+                  const pA = getPlayerById(pidA); const pB = getPlayerById(pidB);
+                  return { zones: [a,b], posA, posB, nameA: pA?.name?.split(" ")[0] || `#${pA?.number}`, nameB: pB?.name?.split(" ")[0] || `#${pB?.number}` };
+                }).filter(Boolean);
+                return (
+                  <div style={{ marginTop: 8, padding: "6px 8px", borderRadius: 6, background: mismatches.length > 0 ? "#1a1708" : "#0a1a0a", border: `1px solid ${mismatches.length > 0 ? "#854d0e" : "#22c55e44"}` }}>
+                    {mismatches.length === 0 ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                        <span style={{ color: "#22c55e", fontSize: 12 }}>✓</span>
+                        <span style={{ fontSize: 10, color: "#22c55e", fontWeight: 600 }}>Lineup valid</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ fontSize: 9, fontWeight: 700, color: "#eab308", marginBottom: 2, letterSpacing: 0.5 }}>⚠ POSITION MISMATCH</div>
+                        {mismatches.map((m, i) => (
+                          <div key={i} style={{ fontSize: 10, color: "#fbbf24", marginBottom: 1 }}>
+                            Z{m.zones[0]}↔{m.zones[1]}: {m.nameA} ({m.posA}) vs {m.nameB} ({m.posB})
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           </div>
           );
@@ -5112,6 +5263,9 @@ function VolleyballStats() {
             <button key={t.key} style={{ ...S.tab, ...(tab === t.key ? S.tabActive : {}) }}
               onClick={() => setTab(t.key)}>
               {t.label}
+              {t.key === "scout" && (set?.shots?.length || 0) > 0 && (
+                <span style={S.badge}>{set.shots.length}</span>
+              )}
               {t.key === "subs" && set?.subCount > 0 && (
                 <span style={S.badge}>{set.subCount}</span>
               )}
@@ -5683,7 +5837,7 @@ function VolleyballStats() {
                     </tr>
                   </thead>
                   <tbody>
-                    {rosterPlayers.map((p) => {
+                    {[...rosterPlayers].sort((a, b) => ((getViewPassingStats(b.id)?.simpleAvg) ?? -Infinity) - ((getViewPassingStats(a.id)?.simpleAvg) ?? -Infinity)).map((p) => {
                       const ps = getViewStats(p.id);
                       const att = (ps.kill || 0) + (ps.attack_error || 0) + (ps.attack_blocked || 0);
                       const kPct = att > 0 ? ((ps.kill || 0) - (ps.attack_error || 0) - (ps.attack_blocked || 0)) / att : null;
@@ -5810,7 +5964,7 @@ function VolleyballStats() {
                     </tr>
                   </thead>
                   <tbody>
-                    {rosterPlayers.map((p) => {
+                    {[...rosterPlayers].sort((a, b) => ((getViewPassingStats(b.id)?.simpleAvg) ?? -Infinity) - ((getViewPassingStats(a.id)?.simpleAvg) ?? -Infinity)).map((p) => {
                       const ps = getViewPassingStats(p.id);
                       if (!ps) return null;
                       const wtdColor = ps.weightedScore >= 2.5 ? "#22c55e" : ps.weightedScore >= 2.0 ? "#007bff" : "#ef4444";
@@ -5888,12 +6042,13 @@ function VolleyballStats() {
 
                   {/* Priority variables with current set comparison */}
                   {formulaAnalysis.variables.filter(v => v.priorityZone !== "low_relationship").map((v) => {
+                    const ready = isCategoryReady(setProgress.currentVars, v.name);
                     const currentSetVal = setProgress.currentVars[v.name] ?? 0;
                     const isInverse = v.name === "reception_error_rate";
-                    const onTarget = v.threshold !== null && (isInverse ? currentSetVal <= v.threshold : currentSetVal >= v.threshold);
+                    const onTarget = ready && v.threshold !== null && (isInverse ? currentSetVal <= v.threshold : currentSetVal >= v.threshold);
                     const zoneColor = v.priorityZone === "high_impact" ? "#ef4444" : v.priorityZone === "moderate_impact" ? "#eab308" : "#22c55e";
                     const zoneLabel = v.priorityZone === "high_impact" ? "PRIORITY" : v.priorityZone === "moderate_impact" ? "SECONDARY" : "ON TARGET";
-                    const pct = v.threshold ? Math.min(Math.max((isInverse ? (v.threshold / Math.max(currentSetVal, 0.001)) : (currentSetVal / Math.max(v.threshold, 0.001))) * 100, 0), 100) : 0;
+                    const pct = (ready && v.threshold) ? Math.min(Math.max((isInverse ? (v.threshold / Math.max(currentSetVal, 0.001)) : (currentSetVal / Math.max(v.threshold, 0.001))) * 100, 0), 100) : 0;
                     const trendIcon = v.trend === "improving" ? "↑" : v.trend === "declining" ? "↓" : "→";
                     const trendColor = v.trend === "improving" ? "#22c55e" : v.trend === "declining" ? "#ef4444" : "#9ca3af";
 
@@ -5905,7 +6060,7 @@ function VolleyballStats() {
                             <span style={{ fontSize: 7, fontWeight: 800, color: zoneColor, background: zoneColor + "22", padding: "1px 4px", borderRadius: 3, letterSpacing: 0.5 }}>{zoneLabel}</span>
                           </div>
                           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                            <span style={{ fontSize: 11, fontWeight: 800, color: onTarget ? "#22c55e" : "#ef4444" }}>{v.format(currentSetVal)}</span>
+                            <span style={{ fontSize: 11, fontWeight: 800, color: !ready ? "#6b7280" : onTarget ? "#22c55e" : "#ef4444" }}>{ready ? v.format(currentSetVal) : "building…"}</span>
                             {v.threshold !== null && <span style={{ opacity: 0.4, fontSize: 10 }}>/ {v.format(v.threshold)}</span>}
                           </div>
                         </div>
@@ -6397,6 +6552,32 @@ function SubManager({ onCourt, bench, onSub }) {
   const benchSorted = sortByPosition(bench);
   const outPlayer = subOut ? courtSorted.find(c => c.id === subOut) : null;
 
+  // Opposite zone pair validation (mirrors match setup logic)
+  const ZONE_PAIRS = [[1,4],[2,5],[3,6]];
+  const getOppositeZone = (zone) => {
+    for (const [a, b] of ZONE_PAIRS) {
+      if (zone === a) return b;
+      if (zone === b) return a;
+    }
+    return null;
+  };
+
+  // Check if subbing benchPlayer in for outPlayer would create a position mismatch
+  const getSubMismatch = (benchPlayer) => {
+    if (!outPlayer) return null;
+    const outZone = outPlayer.pos;
+    const oppZone = getOppositeZone(outZone);
+    if (!oppZone) return null;
+    const oppCourtPlayer = courtSorted.find(c => c.pos === oppZone);
+    if (!oppCourtPlayer) return null;
+    const oppPos = oppCourtPlayer.effectivePos;
+    const inPos = benchPlayer.effectivePos || benchPlayer.position || "";
+    if (inPos && oppPos && inPos !== oppPos) {
+      return { inPos, oppPos, oppName: oppCourtPlayer.player?.name?.split(" ")[0] || `#${oppCourtPlayer.player?.number}`, oppZone };
+    }
+    return null;
+  };
+
   return (
     <div>
       {/* Two-column layout: court | bench */}
@@ -6422,35 +6603,44 @@ function SubManager({ onCourt, bench, onSub }) {
             })}
           </div>
         </div>
-        
+
         {/* Bench players */}
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, opacity: 0.3, marginBottom: 6, textAlign: "center" }}>BENCH</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {benchSorted.length === 0 ? (
               <div style={{ fontSize: 11, opacity: 0.3, textAlign: "center", padding: 16 }}>No bench players</div>
-            ) : benchSorted.map((p) => (
-              <button key={p.id} onClick={() => {
-                if (!subOut) return;
-                onSub(p.id, subOut);
-                setSubOut(null);
-              }} style={{
-                display: "flex", alignItems: "center", gap: 6, padding: "10px 8px",
-                background: subOut ? "#0a1a0a" : "#111118",
-                border: `2px solid ${subOut ? "#22c55e44" : "#1e1e28"}`,
-                borderRadius: 8, color: "#e2e8f0",
-                cursor: subOut ? "pointer" : "default",
-                opacity: subOut ? 1 : 0.4,
-              }}>
-                <span style={{ fontWeight: 900, fontSize: 14, minWidth: 50 }}>{displayName(p)}</span>
-                <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.5 }}>#{p.number}</span>
-                <span style={{ fontSize: 9, opacity: 0.4, fontWeight: 700 }}>{p.effectivePos || ""}</span>
-              </button>
-            ))}
+            ) : benchSorted.map((p) => {
+              const mismatch = getSubMismatch(p);
+              return (
+              <div key={p.id}>
+                <button onClick={() => {
+                  if (!subOut) return;
+                  onSub(p.id, subOut);
+                  setSubOut(null);
+                }} style={{
+                  display: "flex", alignItems: "center", gap: 6, padding: "10px 8px",
+                  background: subOut ? (mismatch ? "#1a1708" : "#0a1a0a") : "#111118",
+                  border: `2px solid ${subOut ? (mismatch ? "#854d0e" : "#22c55e44") : "#1e1e28"}`,
+                  borderRadius: 8, color: "#e2e8f0", width: "100%",
+                  cursor: subOut ? "pointer" : "default",
+                  opacity: subOut ? 1 : 0.4,
+                }}>
+                  <span style={{ fontWeight: 900, fontSize: 14, minWidth: 50 }}>{displayName(p)}</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.5 }}>#{p.number}</span>
+                </button>
+                {subOut && mismatch && (
+                  <div style={{ fontSize: 8, color: "#eab308", padding: "2px 8px", marginTop: 1 }}>
+                    ⚠ {mismatch.inPos} ≠ {mismatch.oppName} ({mismatch.oppPos}) in Z{mismatch.oppZone}
+                  </div>
+                )}
+              </div>
+              );
+            })}
           </div>
         </div>
       </div>
-      
+
       {/* Instruction */}
       <div style={{ textAlign: "center", marginTop: 8, fontSize: 10, opacity: 0.3 }}>
         {!subOut ? "Tap a court player, then tap a bench player" : `Tap a bench player to sub in for #${outPlayer?.player?.number || "?"}`}

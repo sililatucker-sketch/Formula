@@ -1,0 +1,514 @@
+[
+  {
+    "slug": "indy-ignite-at-orlando-valkyries-",
+    "scheduleEvent": {
+      "id": 549,
+      "title": "Indy Ignite at Orlando Valkyries",
+      "start_datetime": "2026-01-23T00:00:00.000000Z",
+      "end_datetime": "2026-01-23T04:00:00.000000Z",
+      "timezone": null,
+      "location": "Addition Financial Arena",
+      "tba": "non_tba",
+      "status": "completed",
+      "status_text": null,
+      "game_result": "loss",
+      "result_text": "IND, 3-1",
+      "display_on_calendar": true,
+      "stage": null,
+      "venue_type": "home",
+      "first_team_id": 6,
+      "first_team_name": "Orlando Valkyries",
+      "first_team_logo_id": 12591,
+      "first_team_score": 1,
+      "second_team_id": 11,
+      "second_team_name": "Indy Ignite",
+      "second_team_logo_id": 12588,
+      "second_team_score": 3,
+      "season_id": 36,
+      "image_id": null,
+      "schedule_id": 74,
+      "tournament_id": null,
+      "tournament_group_id": null,
+      "tournament_round_id": null,
+      "presented_by": null,
+      "presented_by_url": "https://www.youtube.com/watch?v=k-glnY0OfO8&pp=ygUadmFsa3lyaWVzIGF0IGlnbmlyZSBmZWIgMTM%3D",
+      "presented_by_logo_id": 9107,
+      "mobile_presented_by_logo_id": null,
+      "volley_station_match_id": 2256612
+    },
+    "iframeStats": [
+      {
+        "type": "match-result",
+        "tables": [],
+        "bodyText": "Orlando Valkyries\n18\n25\n25\n18\n1\nIndy Ignite\n25\n23\n27\n25\n3"
+      },
+      {
+        "type": "team-stats",
+        "tables": [],
+        "bodyText": "Orlando Valkyries\nTotal\nSet 1\nSet 2\nSet 3\nSet 4\nNo\nName and surname\nS1\nS2\nS3\nS4\nS5\nPoints\nTotal\nServe\nTotal\nError\nAce\nReception\nTotal\nError\nPos%\nPerf%\nAttacks\nTotal\nError\nBlk\nKill\nKill%\nEff%\nBlock\nBLK\nOther\nDig\nAssist\n1\nLuper Charitie\n1\n2\n5\n4\n15\n10\n0\n0\n27\n1\n44%\n15%\n37\n1\n5\n14\n38%\n.216\n1\n17\n1\n2\nPukis Hannah\n*\n*\n1\n2\n0\n0\n0\n0\n-\n-\n1\n0\n0\n1\n100%\n1.000\n0\n0\n2\n3\nGuedpard Pornpun\n6\n1\n1\n6\n0\n13\n0\n0\n0\n0\n-\n-\n2\n1\n0\n0\n0%\n-.500\n0\n8\n32\n4\nSchwan Courtney\n5\n2\n1\n0\n10\n0\n0\n24\n1\n57%\n17%\n12\n1\n2\n0\n0%\n-.250\n0\n3\n0\n6\nAbercrombie Brittany\n3\n4\n4\n3\n9\n13\n0\n2\n0\n0\n-\n-\n34\n3\n3\n7\n21%\n.029\n0\n6\n0\n7\nShime Naya\n*\n*\n1\n1\n0\n0\n0\n0\n-\n-\n2\n0\n0\n0\n0%\n.000\n1\n0\n0\n8\nVander Weide Lindsey\n4\n0\n2\n0\n0\n7\n0\n56%\n28%\n5\n1\n3\n0\n0%\n-.800\n0\n0\n0\n11\nBrown Kaz\n5\n6\n6\n5\n10\n12\n2\n1\n2\n0\n100%\n0%\n12\n0\n1\n6\n50%\n.417\n3\n0\n0\n12\nPusic Teodora\nL\n*\n*\n*\n*\n0\n0\n0\n0\n13\n2\n31%\n8%\n0\n0\n0\n0\n-\n-\n0\n15\n1\n13\nFoster Natalie\n2\n3\n3\n6\n18\n2\n1\n2\n0\n50%\n0%\n14\n1\n1\n5\n36%\n.214\n0\n2\n0\n14\nMaddux Hannah\n*\n4\n3\n1\n0\n6\n0\n33%\n17%\n9\n1\n1\n4\n44%\n.222\n0\n1\n0\n15\nNeal Colby\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n21\nKelley Bre\n2\n2\n3\n0\n0\n0\n0\n-\n-\n2\n0\n0\n1\n50%\n.500\n1\n1\n0\n23\nKlika Emmy\nL\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\nT\nTotal\n48\n87\n5\n4\n81\n4\n48%\n15%\n130\n9\n16\n38\n28%\n.100\n6\n53\n36\nSTATS DELIVERED BY\nIndy Ignite\nTotal\nSet 1\nSet 2\nSet 3\nSet 4\nNo\nName and surname\nS1\nS2\nS3\nS4\nS5\nPoints\nTotal\nServe\nTotal\nError\nAce\nReception\nTotal\nError\nPos%\nPerf%\nAttacks\nTotal\nError\nBlk\nKill\nKill%\nEff%\nBlock\nBLK\nOther\nDig\nAssist\n2\nHalter Emma\n*\n*\n*\n0\n3\n2\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n4\nBush Emoni\n4\n4\n4\n13\n9\n4\n1\n12\n2\n8%\n8%\n32\n4\n1\n12\n38%\n.219\n0\n3\n0\n7\nMember-Meneh Leketor\n*\n4\n6\n4\n0\n0\n11\n0\n45%\n9%\n14\n1\n0\n5\n36%\n.286\n1\n7\n0\n8\nHannah Camryn\n3\n3\n3\n11\n9\n2\n0\n0\n0\n-\n-\n21\n5\n0\n9\n43%\n.190\n2\n3\n0\n9\nScott Elena\nL\n*\n*\n*\n*\n0\n0\n0\n0\n19\n1\n53%\n11%\n0\n0\n0\n0\n-\n-\n0\n7\n1\n11\nHavili Ainise\n6\n6\n6\n3\n9\n1\n0\n0\n0\n-\n-\n6\n0\n1\n2\n33%\n.167\n1\n7\n31\n12\nLandfair Taylor\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n13\nCresse Cara\n2\n2\n2\n2\n10\n16\n6\n1\n0\n0\n-\n-\n15\n3\n2\n5\n33%\n.000\n4\n3\n0\n14\nDeBeer Anna\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n17\nMohler Blake\n5\n5\n5\n5\n14\n15\n1\n0\n2\n0\n50%\n50%\n15\n2\n0\n8\n53%\n.400\n6\n2\n0\n19\nTealer Azhani\n*\n*\n3\n10\n8\n1\n0\n0\n0\n-\n-\n19\n2\n1\n10\n53%\n.368\n0\n5\n0\n22\nMartyn Lydia\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n23\nLund Kayla\n1\n1\n1\n1\n17\n20\n1\n2\n38\n1\n61%\n42%\n25\n1\n1\n14\n56%\n.480\n1\n13\n1\n28\nBotezat Alexandra\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n91\nTuaniga Mia\n*\n*\n6\n2\n6\n0\n0\n0\n0\n-\n-\n4\n0\n0\n1\n25%\n.250\n1\n2\n28\nT\nTotal\n86\n99\n18\n4\n82\n4\n49%\n26%\n151\n18\n6\n66\n44%\n.278\n16\n52\n61\nSTATS DELIVERED BY"
+      }
+    ],
+    "scrapedAt": "2026-05-09T00:51:54.182Z",
+    "_filming_note": " (slug-derived names)"
+  },
+  {
+    "slug": "indy-ignite-at-omaha-supernovas-1",
+    "scheduleEvent": {
+      "id": 599,
+      "title": "Indy Ignite at Omaha Supernovas",
+      "start_datetime": "2026-04-04T20:00:00.000000Z",
+      "end_datetime": "2026-04-05T03:59:00.000000Z",
+      "timezone": null,
+      "location": "CHI Health Center",
+      "tba": "non_tba",
+      "status": "completed",
+      "status_text": null,
+      "game_result": "loss",
+      "result_text": "IND, 3-0",
+      "display_on_calendar": true,
+      "stage": null,
+      "venue_type": "home",
+      "first_team_id": 5,
+      "first_team_name": "Omaha Supernovas",
+      "first_team_logo_id": 12589,
+      "first_team_score": 0,
+      "second_team_id": 11,
+      "second_team_name": "Indy Ignite",
+      "second_team_logo_id": 12588,
+      "second_team_score": 3,
+      "season_id": 36,
+      "image_id": null,
+      "schedule_id": 74,
+      "tournament_id": null,
+      "tournament_group_id": null,
+      "tournament_round_id": null,
+      "presented_by": null,
+      "presented_by_url": "https://scrippssportsnetwork.com/",
+      "presented_by_logo_id": 16403,
+      "mobile_presented_by_logo_id": null,
+      "volley_station_match_id": 2256678
+    },
+    "iframeStats": [
+      {
+        "type": "match-result",
+        "tables": [],
+        "bodyText": "Indy Ignite\n25\n25\n25\n3\nOmaha Supernovas\n21\n19\n21\n0"
+      },
+      {
+        "type": "team-stats",
+        "tables": [],
+        "bodyText": "Omaha Supernovas\nTotal\nSet 1\nSet 2\nSet 3\nNo\nName and surname\nS1\nS2\nS3\nS4\nS5\nPoints\nTotal\nServe\nTotal\nError\nAce\nReception\nTotal\nError\nPos%\nPerf%\nAttacks\nTotal\nError\nBlk\nKill\nKill%\nEff%\nBlock\nBLK\nOther\nDig\nAssist\n2\nHilley Sydney\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n5\nNuneviller Brooke\n2\n2\n5\n10\n13\n1\n0\n21\n0\n56%\n28%\n25\n1\n1\n10\n40%\n.320\n0\n7\n1\n6\nMosher Brooke\n1\n1\n1\n1\n9\n3\n0\n0\n0\n-\n-\n4\n1\n0\n1\n25%\n.000\n0\n8\n32\n7\nTeBrake Norah\n*\n1\n2\n0\n0\n1\n0\n100%\n100%\n2\n0\n0\n1\n50%\n.500\n0\n0\n0\n8\nCooper Reagan\n5\n5\n2\n12\n9\n1\n0\n21\n4\n24%\n5%\n27\n2\n1\n11\n41%\n.296\n1\n2\n0\n10\nReinhardt Kiara\n3\n3\n3\n4\n11\n2\n0\n0\n0\n-\n-\n9\n1\n0\n3\n33%\n.222\n1\n2\n0\n11\nParsons Sarah\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n13\nBeason Merritt\n*\n*\n4\n8\n8\n1\n1\n0\n0\n-\n-\n14\n0\n1\n5\n36%\n.286\n2\n3\n0\n17\nLeao Janice\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n20\nHolder Allison\n*\n*\n*\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n21\nOnabanjo Toyosi\n6\n6\n2\n2\n0\n0\n1\n0\n100%\n100%\n5\n0\n2\n2\n40%\n.000\n0\n1\n0\n22\nOglivie Elena\nL\n*\n*\n*\n0\n0\n0\n0\n19\n0\n53%\n16%\n0\n0\n0\n0\n-\n-\n0\n12\n2\n26\nBlackwell Leyla\n*\n6\n1\n3\n1\n0\n1\n0\n0%\n0%\n2\n0\n0\n1\n50%\n.500\n0\n0\n0\n27\nLondot Emily\n4\n4\n4\n6\n2\n0\n0\n0\n-\n-\n12\n2\n1\n4\n33%\n.083\n0\n1\n0\nT\nTotal\n43\n63\n11\n1\n64\n4\n45%\n19%\n100\n7\n6\n38\n38%\n.250\n4\n36\n35\nSTATS DELIVERED BY\nIndy Ignite\nTotal\nSet 1\nSet 2\nSet 3\nNo\nName and surname\nS1\nS2\nS3\nS4\nS5\nPoints\nTotal\nServe\nTotal\nError\nAce\nReception\nTotal\nError\nPos%\nPerf%\nAttacks\nTotal\nError\nBlk\nKill\nKill%\nEff%\nBlock\nBLK\nOther\nDig\nAssist\n2\nHalter Emma\n*\n*\n*\n1\n4\n0\n1\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n4\nBush Emoni\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n7\nMember-Meneh Leketor\n1\n5\n1\n11\n10\n0\n0\n19\n1\n47%\n32%\n21\n2\n0\n10\n48%\n.381\n1\n8\n1\n8\nHannah Camryn\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n9\nScott Elena\nL\n*\n*\n*\n0\n0\n0\n0\n13\n0\n54%\n31%\n0\n0\n0\n0\n-\n-\n0\n8\n5\n11\nHavili Ainise\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n12\nLandfair Taylor\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n13\nCresse Cara\n2\n6\n2\n8\n9\n2\n0\n0\n0\n-\n-\n7\n0\n0\n5\n71%\n.714\n3\n4\n0\n14\nDeBeer Anna\n4\n2\n4\n17\n11\n1\n0\n17\n0\n41%\n28%\n36\n1\n2\n16\n44%\n.361\n1\n4\n0\n19\nTealer Azhani\n3\n1\n3\n15\n15\n2\n1\n0\n0\n-\n-\n21\n2\n2\n13\n62%\n.429\n1\n6\n0\n22\nMartyn Lydia\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n23\nLund Kayla\n*\n*\n0\n2\n0\n0\n2\n0\n0%\n0%\n0\n0\n0\n0\n-\n-\n0\n1\n0\n26\nClothier Emma\n5\n3\n5\n1\n13\n3\n0\n1\n0\n100%\n0%\n10\n1\n0\n1\n10%\n.000\n0\n2\n1\n28\nBotezat Alexandra\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n91\nTuaniga Mia\n6\n4\n6\n2\n9\n1\n2\n0\n0\n-\n-\n3\n0\n0\n0\n0%\n.000\n0\n9\n37\nT\nTotal\n55\n73\n9\n4\n52\n1\n46%\n28%\n98\n6\n4\n45\n46%\n.357\n6\n42\n44\nSTATS DELIVERED BY"
+      }
+    ],
+    "scrapedAt": "2026-05-09T01:06:38.525Z"
+  },
+  {
+    "slug": "indy-ignite-at-san-diego-mojo-3",
+    "scheduleEvent": {
+      "id": 543,
+      "title": "Indy Ignite at San Diego Mojo",
+      "start_datetime": "2026-04-10T02:00:00.000000Z",
+      "end_datetime": "2026-04-10T03:59:59.000000Z",
+      "timezone": null,
+      "location": "Viejas Arena",
+      "tba": "non_tba",
+      "status": "completed",
+      "status_text": null,
+      "game_result": "loss",
+      "result_text": "IND, 3-2",
+      "display_on_calendar": true,
+      "stage": null,
+      "venue_type": "home",
+      "first_team_id": 8,
+      "first_team_name": "San Diego Mojo",
+      "first_team_logo_id": 12590,
+      "first_team_score": 2,
+      "second_team_id": 11,
+      "second_team_name": "Indy Ignite",
+      "second_team_logo_id": 12588,
+      "second_team_score": 3,
+      "season_id": 36,
+      "image_id": null,
+      "schedule_id": 74,
+      "tournament_id": null,
+      "tournament_group_id": null,
+      "tournament_round_id": null,
+      "presented_by": null,
+      "presented_by_url": null,
+      "presented_by_logo_id": 13326,
+      "mobile_presented_by_logo_id": null,
+      "volley_station_match_id": 2256681
+    },
+    "iframeStats": [
+      {
+        "type": "match-result",
+        "tables": [],
+        "bodyText": "Indy Ignite\n25\n19\n22\n25\n15\n3\nSan Diego Mojo\n20\n25\n25\n19\n9\n2"
+      },
+      {
+        "type": "team-stats",
+        "tables": [],
+        "bodyText": "San Diego Mojo\nTotal\nSet 1\nSet 2\nSet 3\nSet 4\nSet 5\nNo\nName and surname\nS1\nS2\nS3\nS4\nS5\nPoints\nTotal\nServe\nTotal\nError\nAce\nReception\nTotal\nError\nPos%\nPerf%\nAttacks\nTotal\nError\nBlk\nKill\nKill%\nEff%\nBlock\nBLK\nOther\nDig\nAssist\n2\nVenegas Shara\nL\n*\n*\n*\n*\n*\n0\n0\n0\n0\n26\n1\n50%\n12%\n0\n0\n0\n0\n-\n-\n0\n16\n2\n4\nJacobs Allison\n*\n2\n3\n2\n1\n12\n10\n1\n0\n25\n1\n36%\n4%\n32\n4\n0\n11\n34%\n.219\n1\n6\n0\n5\nCaffey Kayla\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n6\nBrakocevic Jovana\n3\n4\n5\n*\n4\n4\n0\n0\n0\n0\n-\n-\n17\n1\n0\n3\n18%\n.118\n1\n1\n1\n9\nLoberg Grace\n4\n5\n6\n5\n4\n20\n14\n0\n2\n39\n1\n44%\n15%\n48\n2\n2\n16\n33%\n.250\n2\n16\n0\n10\nSandbothe Taylor\n2\n3\n4\n3\n2\n13\n32\n2\n1\n1\n0\n0%\n0%\n18\n4\n2\n7\n39%\n.056\n5\n7\n2\n11\nLewis Morgan\n*\n4\n3\n10\n7\n3\n1\n0\n0\n-\n-\n30\n2\n2\n7\n23%\n.100\n2\n5\n0\n12\nGrote Marin\n5\n6\n1\n6\n5\n15\n13\n1\n0\n1\n0\n0%\n0%\n29\n3\n0\n9\n31%\n.207\n6\n2\n0\n14\nVicini McKenna\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n16\nWatson Karis\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n17\nGeorgiades Mary Kate\nL\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n21\nMonserez Marlie\n6\n1\n2\n1\n6\n3\n15\n0\n1\n0\n0\n-\n-\n5\n0\n1\n2\n40%\n.200\n0\n14\n47\n22\nScully Shannon\n*\n0\n0\n0\n0\n0\n0\n-\n-\n1\n0\n0\n0\n0%\n.000\n0\n0\n0\n31\nTabron Maya\n1\n*\n2\n2\n0\n0\n10\n0\n40%\n40%\n12\n1\n0\n2\n17%\n.083\n0\n1\n0\n33\nKubik Hayden\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n44\nGraham Carly\n*\n0\n1\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n2\n1\nT\nTotal\n79\n98\n7\n5\n102\n3\n42%\n14%\n192\n17\n7\n57\n30%\n.172\n17\n70\n53\nSTATS DELIVERED BY\nIndy Ignite\nTotal\nSet 1\nSet 2\nSet 3\nSet 4\nSet 5\nNo\nName and surname\nS1\nS2\nS3\nS4\nS5\nPoints\nTotal\nServe\nTotal\nError\nAce\nReception\nTotal\nError\nPos%\nPerf%\nAttacks\nTotal\nError\nBlk\nKill\nKill%\nEff%\nBlock\nBLK\nOther\nDig\nAssist\n2\nHalter Emma\n*\n0\n0\n0\n0\n1\n0\n100%\n0%\n0\n0\n0\n0\n-\n-\n0\n2\n0\n4\nBush Emoni\n*\n*\n3\n2\n0\n0\n4\n0\n0%\n0%\n11\n0\n2\n3\n27%\n.091\n0\n3\n0\n7\nMember-Meneh Leketor\n4\n5\n2\n5\n9\n1\n1\n12\n1\n42%\n25%\n22\n3\n2\n4\n18%\n-.045\n0\n7\n0\n8\nHannah Camryn\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n9\nScott Elena\nL\n*\n*\n*\n*\n*\n0\n0\n0\n0\n39\n2\n41%\n21%\n0\n0\n0\n0\n-\n-\n0\n20\n7\n11\nHavili Ainise\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n12\nLandfair Taylor\n2\n2\n8\n9\n0\n0\n3\n1\n0%\n0%\n18\n1\n0\n7\n39%\n.333\n1\n5\n0\n13\nCresse Cara\n5\n6\n6\n6\n6\n11\n17\n1\n0\n0\n0\n-\n-\n21\n2\n5\n8\n38%\n.048\n3\n1\n1\n14\nDeBeer Anna\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n19\nTealer Azhani\n6\n1\n4\n4\n4\n22\n10\n0\n0\n0\n0\n-\n-\n48\n3\n3\n22\n46%\n.333\n0\n14\n0\n22\nMartyn Lydia\n*\n3\n3\n7\n4\n1\n0\n1\n0\n100%\n100%\n10\n0\n0\n4\n40%\n.400\n3\n1\n0\n23\nLund Kayla\n1\n2\n5\n5\n5\n14\n17\n0\n0\n31\n1\n55%\n39%\n46\n4\n5\n14\n30%\n.109\n0\n26\n0\n26\nClothier Emma\n2\n3\n3\n2\n10\n0\n0\n0\n0\n-\n-\n6\n0\n0\n2\n33%\n.333\n0\n4\n1\n28\nBotezat Alexandra\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n91\nTuaniga Mia\n3\n4\n1\n1\n1\n8\n28\n1\n2\n0\n0\n-\n-\n8\n0\n0\n6\n75%\n.750\n0\n16\n56\nT\nTotal\n80\n106\n4\n3\n91\n5\n44%\n26%\n190\n13\n17\n70\n37%\n.211\n7\n99\n65\nSTATS DELIVERED BY"
+      }
+    ],
+    "scrapedAt": "2026-05-09T01:07:29.369Z"
+  },
+  {
+    "slug": "atlanta-vibe-at-indy-ignite-3",
+    "scheduleEvent": {
+      "id": 510,
+      "title": "Atlanta Vibe at Indy Ignite",
+      "start_datetime": "2026-04-12T19:00:00.000000Z",
+      "end_datetime": "2026-04-12T23:00:00.000000Z",
+      "timezone": null,
+      "location": "Fishers Event Center",
+      "tba": "non_tba",
+      "status": "completed",
+      "status_text": null,
+      "game_result": "win",
+      "result_text": "IND, 3-0",
+      "display_on_calendar": true,
+      "stage": null,
+      "venue_type": "home",
+      "first_team_id": 11,
+      "first_team_name": "Indy Ignite",
+      "first_team_logo_id": 12588,
+      "first_team_score": 3,
+      "second_team_id": 2,
+      "second_team_name": "Atlanta Vibe",
+      "second_team_logo_id": 12584,
+      "second_team_score": 0,
+      "season_id": 36,
+      "image_id": null,
+      "schedule_id": 74,
+      "tournament_id": null,
+      "tournament_group_id": null,
+      "tournament_round_id": null,
+      "presented_by": null,
+      "presented_by_url": null,
+      "presented_by_logo_id": 14000,
+      "mobile_presented_by_logo_id": null,
+      "volley_station_match_id": 2256685
+    },
+    "iframeStats": [
+      {
+        "type": "match-result",
+        "tables": [],
+        "bodyText": "Indy Ignite\n25\n28\n27\n3\nAtlanta Vibe\n19\n26\n25\n0"
+      },
+      {
+        "type": "team-stats",
+        "tables": [],
+        "bodyText": "Indy Ignite\nTotal\nSet 1\nSet 2\nSet 3\nNo\nName and surname\nS1\nS2\nS3\nS4\nS5\nPoints\nTotal\nServe\nTotal\nError\nAce\nReception\nTotal\nError\nPos%\nPerf%\nAttacks\nTotal\nError\nBlk\nKill\nKill%\nEff%\nBlock\nBLK\nOther\nDig\nAssist\n2\nHalter Emma\n*\n*\n0\n3\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n4\nBush Emoni\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n7\nMember-Meneh Leketor\n1\n1\n1\n14\n12\n1\n0\n37\n2\n56%\n41%\n29\n1\n2\n13\n45%\n.345\n1\n12\n0\n8\nHannah Camryn\n*\n1\n0\n0\n0\n0\n0\n-\n-\n1\n1\n0\n0\n0%\n-1.000\n1\n0\n0\n9\nScott Elena\nL\n*\n*\n*\n0\n0\n0\n0\n9\n0\n56%\n33%\n0\n0\n0\n0\n-\n-\n0\n14\n5\n11\nHavili Ainise\n*\n0\n2\n1\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n3\n12\nLandfair Taylor\n*\n0\n0\n0\n0\n0\n0\n-\n-\n3\n0\n0\n0\n0%\n.000\n0\n0\n0\n13\nCresse Cara\n5\n5\n5\n9\n2\n2\n0\n0\n-\n-\n7\n3\n0\n2\n28%\n-.143\n1\n0\n0\n14\nDeBeer Anna\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n19\nTealer Azhani\n3\n3\n3\n20\n13\n1\n0\n0\n0\n-\n-\n34\n2\n1\n19\n56%\n.471\n1\n7\n1\n22\nMartyn Lydia\n2\n6\n5\n0\n0\n1\n1\n0%\n0%\n6\n1\n0\n4\n67%\n.500\n2\n0\n0\n23\nLund Kayla\n4\n4\n4\n8\n11\n1\n0\n12\n1\n50%\n33%\n25\n2\n1\n8\n32%\n.200\n0\n11\n0\n26\nClothier Emma\n2\n2\n5\n6\n11\n1\n0\n1\n0\n0%\n0%\n11\n1\n0\n3\n27%\n.182\n3\n2\n0\n28\nBotezat Alexandra\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n91\nTuaniga Mia\n6\n6\n6\n1\n12\n3\n0\n1\n0\n0%\n0%\n2\n0\n0\n0\n0%\n.000\n1\n10\n39\nT\nTotal\n61\n78\n10\n2\n61\n4\n52%\n36%\n118\n11\n4\n49\n42%\n.288\n10\n56\n48\nSTATS DELIVERED BY\nAtlanta Vibe\nTotal\nSet 1\nSet 2\nSet 3\nNo\nName and surname\nS1\nS2\nS3\nS4\nS5\nPoints\nTotal\nServe\nTotal\nError\nAce\nReception\nTotal\nError\nPos%\nPerf%\nAttacks\nTotal\nError\nBlk\nKill\nKill%\nEff%\nBlock\nBLK\nOther\nDig\nAssist\n1\nSmith Taylor\n5\n6\n5\n13\n17\n2\n1\n17\n0\n35%\n18%\n26\n1\n4\n12\n46%\n.269\n0\n14\n0\n2\nCarlson Averi\n1\n2\n*\n0\n8\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n3\n10\n7\nTimmer Pia\n*\n*\n0\n3\n1\n0\n0\n0\n-\n-\n1\n0\n0\n0\n0%\n.000\n0\n0\n0\n8\nRampelberg Britt\nL\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n11\nShields Shannon\n*\n*\n1\n3\n7\n0\n0\n0\n0\n-\n-\n4\n0\n0\n2\n50%\n.500\n1\n8\n22\n12\nMartin Ava\n*\n*\n*\n0\n3\n1\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n13\nEdmond Leah\n2\n3\n2\n7\n10\n4\n1\n29\n1\n45%\n28%\n29\n1\n1\n4\n14%\n.069\n2\n3\n3\n15\nJones Aiko\n4\n5\n1\n2\n0\n0\n0\n0\n-\n-\n13\n0\n1\n1\n8%\n.000\n0\n2\n0\n20\nIsringhausen Madolyn\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n23\nMcKissock Elli\nL\n*\n*\n*\n0\n0\n0\n0\n17\n0\n53%\n28%\n0\n0\n0\n0\n-\n-\n0\n5\n1\n24\nDixon Anna\n*\n*\n4\n11\n4\n1\n0\n1\n1\n0%\n0%\n27\n3\n3\n11\n41%\n.185\n0\n5\n0\n25\nMoore Jackie\n3\n2\n3\n0\n0\n1\n0\n0%\n0%\n5\n0\n0\n2\n40%\n.400\n0\n0\n0\n27\nAwoleye Phoebe\n6\n1\n1\n5\n1\n0\n0\n0\n-\n-\n4\n1\n0\n1\n25%\n.000\n0\n0\n0\n44\nMendelson Maggie\n3\n4\n6\n10\n10\n1\n2\n3\n0\n67%\n33%\n15\n0\n1\n7\n47%\n.400\n1\n2\n0\n74\nAndrew Alicia\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\nT\nTotal\n48\n72\n11\n4\n68\n2\n44%\n25%\n124\n6\n10\n40\n32%\n.194\n4\n42\n36\nSTATS DELIVERED BY"
+      }
+    ],
+    "scrapedAt": "2026-05-09T01:08:20.164Z"
+  },
+  {
+    "slug": "indy-ignite-at-grand-rapids-rise-3",
+    "scheduleEvent": {
+      "id": 520,
+      "title": "Indy Ignite at Grand Rapids Rise",
+      "start_datetime": "2026-04-17T23:00:00.000000Z",
+      "end_datetime": "2026-04-18T03:00:00.000000Z",
+      "timezone": null,
+      "location": "Van Andel Arena",
+      "tba": "non_tba",
+      "status": "completed",
+      "status_text": null,
+      "game_result": "win",
+      "result_text": "GR, 3-1",
+      "display_on_calendar": true,
+      "stage": null,
+      "venue_type": "home",
+      "first_team_id": 4,
+      "first_team_name": "Grand Rapids Rise",
+      "first_team_logo_id": 12587,
+      "first_team_score": 3,
+      "second_team_id": 11,
+      "second_team_name": "Indy Ignite",
+      "second_team_logo_id": 12588,
+      "second_team_score": 1,
+      "season_id": 36,
+      "image_id": null,
+      "schedule_id": 74,
+      "tournament_id": null,
+      "tournament_group_id": null,
+      "tournament_round_id": null,
+      "presented_by": null,
+      "presented_by_url": "https://www.youtube.com/@majorleaguevolley/streams",
+      "presented_by_logo_id": 9106,
+      "mobile_presented_by_logo_id": null,
+      "volley_station_match_id": 2256691
+    },
+    "iframeStats": [
+      {
+        "type": "match-result",
+        "tables": [],
+        "bodyText": "Grand Rapids Rise\n18\n25\n25\n25\n3\nIndy Ignite\n25\n20\n23\n23\n1"
+      },
+      {
+        "type": "team-stats",
+        "tables": [],
+        "bodyText": "Grand Rapids Rise\nTotal\nSet 1\nSet 2\nSet 3\nSet 4\nNo\nName and surname\nS1\nS2\nS3\nS4\nS5\nPoints\nTotal\nServe\nTotal\nError\nAce\nReception\nTotal\nError\nPos%\nPerf%\nAttacks\nTotal\nError\nBlk\nKill\nKill%\nEff%\nBlock\nBLK\nOther\nDig\nAssist\n1\nG\u00f3mez Camila\n*\n*\n0\n2\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n3\nInneh Elizabet\n4\n4\n3\n3\n20\n20\n0\n1\n0\n0\n-\n-\n44\n3\n3\n19\n43%\n.295\n0\n9\n0\n4\nSnyder Carli\n2\n2\n1\n1\n17\n13\n1\n0\n29\n1\n59%\n14%\n39\n3\n0\n17\n44%\n.359\n0\n11\n0\n6\nHentz Morgan\nL\n*\n*\n*\n*\n0\n0\n0\n0\n15\n0\n67%\n40%\n0\n0\n0\n0\n-\n-\n0\n7\n6\n9\nKa'aha'aina Torres Saige\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n10\nAlhassan Rhamat\n6\n6\n5\n5\n14\n13\n0\n0\n0\n0\n-\n-\n20\n0\n0\n11\n55%\n.550\n3\n4\n2\n12\nOblad Berkeley\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n13\nBriggs-Romine Paige\n5\n5\n4\n4\n9\n15\n2\n0\n39\n2\n69%\n36%\n31\n3\n2\n9\n28%\n.129\n0\n10\n1\n15\nMayfield Allison\n*\n*\n*\n0\n4\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n17\nJensen Alyssa\n3\n3\n2\n2\n9\n12\n1\n0\n0\n0\n-\n-\n10\n2\n0\n4\n40%\n.200\n5\n1\n1\n20\nBray Hattie\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n21\nShelton Alexis\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n22\nTurner Camryn\n1\n1\n6\n6\n4\n13\n0\n0\n0\n0\n-\n-\n7\n0\n0\n2\n28%\n.286\n2\n12\n50\n23\nHarbin Danielle\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n24\nRosenthal Jenna\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n33\nAlonso-Corcelles Candela\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\nT\nTotal\n73\n92\n4\n1\n83\n3\n65%\n28%\n151\n11\n5\n62\n41%\n.305\n10\n54\n60\nSTATS DELIVERED BY\nIndy Ignite\nTotal\nSet 1\nSet 2\nSet 3\nSet 4\nNo\nName and surname\nS1\nS2\nS3\nS4\nS5\nPoints\nTotal\nServe\nTotal\nError\nAce\nReception\nTotal\nError\nPos%\nPerf%\nAttacks\nTotal\nError\nBlk\nKill\nKill%\nEff%\nBlock\nBLK\nOther\nDig\nAssist\n2\nHalter Emma\n*\n*\n0\n3\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n4\nBush Emoni\n*\n*\n0\n1\n0\n0\n1\n0\n0%\n0%\n1\n0\n0\n0\n0%\n.000\n0\n0\n0\n7\nMember-Meneh Leketor\n4\n3\n1\n4\n20\n17\n2\n1\n43\n0\n70%\n28%\n37\n2\n2\n18\n49%\n.378\n1\n9\n1\n8\nHannah Camryn\n*\n*\n2\n1\n0\n0\n0\n0\n-\n-\n5\n1\n0\n2\n40%\n.200\n0\n0\n0\n9\nScott Elena\nL\n*\n*\n*\n*\n0\n0\n0\n0\n18\n0\n83%\n39%\n0\n0\n0\n0\n-\n-\n0\n12\n5\n11\nHavili Ainise\n3\n2\n6\n3\n2\n14\n2\n0\n0\n0\n-\n-\n4\n0\n0\n2\n50%\n.500\n0\n14\n51\n12\nLandfair Taylor\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n13\nCresse Cara\n2\n1\n5\n2\n9\n16\n1\n0\n1\n0\n0%\n0%\n14\n2\n0\n7\n50%\n.357\n2\n2\n0\n14\nDeBeer Anna\n1\n6\n4\n4\n0\n0\n9\n1\n22%\n11%\n17\n2\n1\n4\n24%\n.059\n0\n2\n1\n19\nTealer Azhani\n6\n5\n3\n6\n26\n14\n1\n1\n0\n0\n-\n-\n49\n0\n3\n24\n49%\n.429\n1\n10\n0\n22\nMartyn Lydia\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n23\nLund Kayla\n*\n*\n4\n1\n4\n13\n0\n1\n15\n0\n60%\n40%\n11\n2\n3\n3\n27%\n-.182\n0\n10\n1\n26\nClothier Emma\n5\n4\n2\n5\n7\n9\n3\n0\n1\n0\n100%\n100%\n15\n0\n1\n6\n40%\n.333\n1\n0\n1\n28\nBotezat Alexandra\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n91\nTuaniga Mia\n*\n*\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n5\nT\nTotal\n74\n92\n9\n3\n88\n1\n65%\n31%\n153\n9\n10\n66\n43%\n.307\n5\n59\n65\nSTATS DELIVERED BY"
+      }
+    ],
+    "scrapedAt": "2026-05-09T01:09:23.251Z"
+  },
+  {
+    "slug": "dallas-pulse-at-indy-ignite-1",
+    "scheduleEvent": {
+      "id": 512,
+      "title": "Dallas Pulse at Indy Ignite",
+      "start_datetime": "2026-04-19T22:00:00.000000Z",
+      "end_datetime": "2026-04-20T02:00:00.000000Z",
+      "timezone": null,
+      "location": "Fishers Event Center",
+      "tba": "non_tba",
+      "status": "completed",
+      "status_text": null,
+      "game_result": "win",
+      "result_text": "IND, 3-1",
+      "display_on_calendar": true,
+      "stage": null,
+      "venue_type": "home",
+      "first_team_id": 11,
+      "first_team_name": "Indy Ignite",
+      "first_team_logo_id": 12588,
+      "first_team_score": 3,
+      "second_team_id": 12,
+      "second_team_name": "Dallas Pulse",
+      "second_team_logo_id": 12586,
+      "second_team_score": 1,
+      "season_id": 36,
+      "image_id": null,
+      "schedule_id": 74,
+      "tournament_id": null,
+      "tournament_group_id": null,
+      "tournament_round_id": null,
+      "presented_by": null,
+      "presented_by_url": null,
+      "presented_by_logo_id": 14000,
+      "mobile_presented_by_logo_id": null,
+      "volley_station_match_id": 2256694
+    },
+    "iframeStats": [
+      {
+        "type": "match-result",
+        "tables": [],
+        "bodyText": "Dallas Pulse\n17\n18\n25\n21\n1\nIndy Ignite\n25\n25\n22\n25\n3"
+      },
+      {
+        "type": "team-stats",
+        "tables": [],
+        "bodyText": "Indy Ignite\nTotal\nSet 1\nSet 2\nSet 3\nSet 4\nNo\nName and surname\nS1\nS2\nS3\nS4\nS5\nPoints\nTotal\nServe\nTotal\nError\nAce\nReception\nTotal\nError\nPos%\nPerf%\nAttacks\nTotal\nError\nBlk\nKill\nKill%\nEff%\nBlock\nBLK\nOther\nDig\nAssist\n2\nHalter Emma\n*\n*\n*\n0\n4\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n4\nBush Emoni\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n7\nMember-Meneh Leketor\n3\n2\n3\n2\n15\n11\n2\n0\n29\n1\n34%\n3%\n28\n2\n0\n13\n46%\n.393\n2\n16\n2\n8\nHannah Camryn\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n9\nScott Elena\nL\n*\n*\n*\n*\n0\n0\n0\n0\n17\n0\n53%\n28%\n0\n0\n0\n0\n-\n-\n0\n11\n3\n11\nHavili Ainise\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n12\nLandfair Taylor\n*\n*\n*\n0\n5\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n13\nCresse Cara\n1\n6\n1\n6\n11\n5\n2\n0\n0\n0\n-\n-\n14\n1\n1\n9\n64%\n.500\n2\n2\n0\n14\nDeBeer Anna\n6\n5\n6\n5\n9\n16\n2\n0\n19\n0\n53%\n11%\n35\n7\n3\n8\n23%\n-.057\n1\n11\n0\n19\nTealer Azhani\n5\n4\n5\n4\n20\n13\n0\n0\n0\n0\n-\n-\n31\n1\n4\n19\n61%\n.452\n1\n11\n0\n22\nMartyn Lydia\n4\n3\n4\n3\n16\n17\n4\n1\n0\n0\n-\n-\n22\n5\n2\n10\n45%\n.136\n5\n2\n0\n23\nLund Kayla\n*\n*\n*\n*\n0\n4\n0\n0\n6\n0\n83%\n50%\n0\n0\n0\n0\n-\n-\n0\n2\n0\n26\nClothier Emma\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n28\nBotezat Alexandra\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n91\nTuaniga Mia\n2\n1\n2\n1\n6\n21\n4\n2\n0\n0\n-\n-\n6\n0\n0\n4\n67%\n.667\n0\n9\n55\nT\nTotal\n77\n96\n14\n3\n71\n1\n48%\n15%\n136\n16\n10\n63\n46%\n.272\n11\n64\n60\nSTATS DELIVERED BY\nDallas Pulse\nTotal\nSet 1\nSet 2\nSet 3\nSet 4\nNo\nName and surname\nS1\nS2\nS3\nS4\nS5\nPoints\nTotal\nServe\nTotal\nError\nAce\nReception\nTotal\nError\nPos%\nPerf%\nAttacks\nTotal\nError\nBlk\nKill\nKill%\nEff%\nBlock\nBLK\nOther\nDig\nAssist\n1\nValentin-Anderson Natalia\n3\n2\n1\n2\n2\n22\n2\n1\n1\n0\n0%\n0%\n3\n0\n0\n1\n33%\n.333\n0\n7\n33\n2\nMaldonado Diaz Sofia\n1\n5\n5\n6\n15\n9\n3\n0\n11\n0\n45%\n18%\n47\n7\n4\n12\n26%\n.021\n3\n8\n1\n3\nCullen Celia\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n6\nMurr Kylie\nL\n*\n*\n*\n*\n0\n0\n0\n0\n19\n1\n42%\n26%\n0\n0\n0\n0\n-\n-\n0\n13\n0\n8\nPayne Kelsie\n*\n4\n5\n6\n7\n1\n0\n0\n0\n-\n-\n12\n1\n0\n5\n42%\n.333\n1\n2\n1\n9\nCox Kaylee\n6\n6\n*\n*\n5\n7\n0\n0\n7\n1\n14%\n14%\n14\n0\n1\n4\n28%\n.214\n1\n5\n2\n10\nWhite Kendall\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n11\nJones Malaya\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n12\nCyr Geli\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n15\nColyer Mimi\n4\n3\n2\n3\n11\n10\n1\n0\n39\n1\n41%\n15%\n36\n2\n3\n11\n31%\n.167\n0\n4\n0\n16\nMeuth Caroline\n*\n*\n0\n2\n1\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n17\nMartin Isabel\n*\n1\n2\n0\n0\n4\n0\n75%\n50%\n4\n0\n0\n1\n25%\n.250\n0\n1\n0\n22\nSavage Tristin\n*\n4\n*\n*\n1\n3\n1\n0\n1\n0\n0%\n0%\n4\n0\n1\n1\n25%\n.000\n0\n0\n0\n23\nHord Kaitlyn\n5\n1\n3\n4\n7\n13\n0\n0\n0\n0\n-\n-\n9\n0\n1\n2\n22%\n.111\n5\n2\n0\n42\nBacon Karson\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n52\nBooth Carter\n2\n6\n1\n2\n6\n1\n0\n0\n0\n-\n-\n5\n0\n1\n2\n40%\n.200\n0\n0\n0\nT\nTotal\n50\n81\n10\n1\n82\n3\n40%\n20%\n134\n10\n11\n39\n28%\n.134\n10\n42\n37\nSTATS DELIVERED BY"
+      }
+    ],
+    "scrapedAt": "2026-05-09T01:10:26.382Z"
+  },
+  {
+    "slug": "indy-ignite-at-orlando-valkyries-1",
+    "scheduleEvent": {
+      "id": 559,
+      "title": "Indy Ignite at Orlando Valkyries",
+      "start_datetime": "2026-04-23T23:00:00.000000Z",
+      "end_datetime": "2026-04-24T03:00:00.000000Z",
+      "timezone": null,
+      "location": "Addition Financial Arena",
+      "tba": "non_tba",
+      "status": "completed",
+      "status_text": null,
+      "game_result": "loss",
+      "result_text": "IND, 3-0",
+      "display_on_calendar": true,
+      "stage": null,
+      "venue_type": "home",
+      "first_team_id": 6,
+      "first_team_name": "Orlando Valkyries",
+      "first_team_logo_id": 12591,
+      "first_team_score": 0,
+      "second_team_id": 11,
+      "second_team_name": "Indy Ignite",
+      "second_team_logo_id": 12588,
+      "second_team_score": 3,
+      "season_id": 36,
+      "image_id": null,
+      "schedule_id": 74,
+      "tournament_id": null,
+      "tournament_group_id": null,
+      "tournament_round_id": null,
+      "presented_by": null,
+      "presented_by_url": "https://therokuchannel.roku.com/details/e25551b0bb4953c4b1043caef77181ab/roku-sports-channel",
+      "presented_by_logo_id": 9103,
+      "mobile_presented_by_logo_id": null,
+      "volley_station_match_id": 2256697
+    },
+    "iframeStats": [
+      {
+        "type": "match-result",
+        "tables": [],
+        "bodyText": "Indy Ignite\n25\n25\n25\n3\nOrlando Valkyries\n20\n15\n18\n0"
+      },
+      {
+        "type": "team-stats",
+        "tables": [],
+        "bodyText": "Orlando Valkyries\nTotal\nSet 1\nSet 2\nSet 3\nNo\nName and surname\nS1\nS2\nS3\nS4\nS5\nPoints\nTotal\nServe\nTotal\nError\nAce\nReception\nTotal\nError\nPos%\nPerf%\nAttacks\nTotal\nError\nBlk\nKill\nKill%\nEff%\nBlock\nBLK\nOther\nDig\nAssist\n1\nLuper Charitie\n5\n5\n3\n3\n0\n0\n7\n0\n43%\n14%\n16\n2\n2\n3\n19%\n-.062\n0\n1\n0\n2\nPukis Hannah\n1\n1\n1\n2\n8\n1\n0\n1\n0\n0%\n0%\n3\n0\n0\n2\n67%\n.667\n0\n5\n26\n3\nGuedpard Pornpun\n*\n0\n1\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n1\n3\n4\nSchwan Courtney\n5\n2\n4\n0\n0\n7\n0\n14%\n0%\n5\n0\n0\n1\n20%\n.200\n1\n2\n0\n6\nAbercrombie Brittany\n*\n0\n0\n0\n0\n0\n0\n-\n-\n2\n0\n0\n0\n0%\n.000\n0\n0\n0\n7\nShime Naya\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n8\nVander Weide Lindsey\n2\n0\n1\n0\n0\n5\n1\n0%\n0%\n0\n0\n0\n0\n-\n-\n0\n1\n0\n11\nBrown Kaz\n6\n1\n3\n0\n1\n0\n0\n-\n-\n4\n0\n0\n0\n0%\n.000\n0\n0\n0\n12\nPusic Teodora\nL\n*\n*\n*\n0\n0\n0\n0\n18\n1\n44%\n39%\n0\n0\n0\n0\n-\n-\n0\n7\n0\n13\nFoster Natalie\n3\n3\n3\n6\n11\n4\n0\n1\n0\n100%\n0%\n13\n3\n0\n5\n38%\n.154\n1\n4\n0\n14\nMaddux Hannah\n*\n2\n6\n8\n2\n1\n17\n1\n59%\n18%\n15\n2\n0\n4\n27%\n.133\n1\n1\n0\n15\nNeal Colby\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n21\nKelley Bre\n6\n6\n5\n5\n0\n0\n1\n0\n0%\n0%\n7\n0\n0\n5\n71%\n.714\n0\n0\n1\n23\nKlika Emmy\n*\n0\n1\n0\n0\n1\n0\n100%\n100%\n0\n0\n0\n0\n-\n-\n0\n1\n0\n26\nWeatherington Zoe\n4\n4\n4\n9\n5\n1\n0\n2\n0\n50%\n0%\n25\n3\n1\n8\n32%\n.160\n1\n3\n1\n28\nRollins-Schad Adanna\n*\n2\n4\n4\n0\n0\n8\n0\n38%\n38%\n11\n1\n0\n4\n36%\n.273\n0\n5\n0\nT\nTotal\n38\n54\n8\n2\n68\n3\n41%\n22%\n101\n11\n3\n32\n32%\n.178\n4\n31\n31\nSTATS DELIVERED BY\nIndy Ignite\nTotal\nSet 1\nSet 2\nSet 3\nNo\nName and surname\nS1\nS2\nS3\nS4\nS5\nPoints\nTotal\nServe\nTotal\nError\nAce\nReception\nTotal\nError\nPos%\nPerf%\nAttacks\nTotal\nError\nBlk\nKill\nKill%\nEff%\nBlock\nBLK\nOther\nDig\nAssist\n1\nKeene Jaelyn\n1\n2\n1\n10\n15\n2\n1\n0\n0\n-\n-\n15\n1\n0\n9\n60%\n.533\n0\n2\n0\n2\nHalter Emma\n*\n0\n1\n0\n0\n2\n0\n50%\n0%\n0\n0\n0\n0\n-\n-\n0\n1\n0\n4\nBush Emoni\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n7\nMember-Meneh Leketor\n3\n4\n3\n12\n11\n1\n0\n11\n0\n73%\n36%\n27\n3\n1\n12\n44%\n.296\n0\n13\n1\n8\nHannah Camryn\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n9\nScott Elena\nL\n*\n*\n*\n0\n0\n0\n0\n14\n0\n43%\n21%\n0\n0\n0\n0\n-\n-\n0\n10\n0\n11\nHavili Ainise\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n12\nLandfair Taylor\n*\n0\n2\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n13\nCresse Cara\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n14\nDeBeer Anna\n6\n1\n6\n7\n5\n1\n0\n17\n2\n47%\n24%\n21\n1\n1\n7\n33%\n.238\n0\n6\n2\n19\nTealer Azhani\n5\n6\n5\n11\n6\n1\n0\n0\n0\n-\n-\n17\n2\n2\n9\n53%\n.294\n2\n2\n0\n22\nMartyn Lydia\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n23\nLund Kayla\n*\n*\n0\n5\n0\n0\n2\n0\n50%\n0%\n0\n0\n0\n0\n-\n-\n0\n1\n0\n26\nClothier Emma\n4\n5\n4\n9\n15\n0\n1\n0\n0\n-\n-\n14\n0\n0\n7\n50%\n.500\n1\n0\n0\n28\nBotezat Alexandra\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n91\nTuaniga Mia\n2\n3\n2\n4\n14\n1\n1\n0\n0\n-\n-\n5\n1\n0\n3\n60%\n.400\n0\n11\n40\nT\nTotal\n53\n74\n6\n3\n46\n2\n52%\n24%\n99\n8\n4\n47\n47%\n.354\n3\n46\n43\nSTATS DELIVERED BY"
+      }
+    ],
+    "scrapedAt": "2026-05-09T01:10:51.883Z",
+    "_filming_note": " (slug-derived names)"
+  },
+  {
+    "slug": "indy-ignite-at-atlanta-vibe-3",
+    "scheduleEvent": {
+      "id": 544,
+      "title": "Indy Ignite at Atlanta Vibe",
+      "start_datetime": "2026-04-26T19:00:00.000000Z",
+      "end_datetime": "2026-04-26T22:00:00.000000Z",
+      "timezone": null,
+      "location": "Gas South Arena",
+      "tba": "non_tba",
+      "status": "completed",
+      "status_text": null,
+      "game_result": "loss",
+      "result_text": "IND, 3-1",
+      "display_on_calendar": true,
+      "stage": null,
+      "venue_type": "home",
+      "first_team_id": 2,
+      "first_team_name": "Atlanta Vibe",
+      "first_team_logo_id": 12584,
+      "first_team_score": 1,
+      "second_team_id": 11,
+      "second_team_name": "Indy Ignite",
+      "second_team_logo_id": 12588,
+      "second_team_score": 3,
+      "season_id": 36,
+      "image_id": null,
+      "schedule_id": 74,
+      "tournament_id": null,
+      "tournament_group_id": null,
+      "tournament_round_id": null,
+      "presented_by": null,
+      "presented_by_url": null,
+      "presented_by_logo_id": 13326,
+      "mobile_presented_by_logo_id": null,
+      "volley_station_match_id": 2256701
+    },
+    "iframeStats": [
+      {
+        "type": "match-result",
+        "tables": [],
+        "bodyText": "Indy Ignite\n25\n19\n25\n25\n3\nAtlanta Vibe\n18\n25\n22\n23\n1"
+      },
+      {
+        "type": "team-stats",
+        "tables": [],
+        "bodyText": "Atlanta Vibe\nTotal\nSet 1\nSet 2\nSet 3\nSet 4\nNo\nName and surname\nS1\nS2\nS3\nS4\nS5\nPoints\nTotal\nServe\nTotal\nError\nAce\nReception\nTotal\nError\nPos%\nPerf%\nAttacks\nTotal\nError\nBlk\nKill\nKill%\nEff%\nBlock\nBLK\nOther\nDig\nAssist\n1\nSmith Taylor\n5\n6\n5\n6\n9\n11\n1\n0\n18\n0\n61%\n22%\n32\n4\n0\n9\n28%\n.156\n0\n16\n0\n2\nCarlson Averi\n1\n2\n1\n2\n3\n17\n0\n0\n1\n1\n0%\n0%\n4\n0\n0\n2\n50%\n.500\n1\n10\n47\n7\nTimmer Pia\n*\n*\n*\n*\n0\n6\n1\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n1\n0\n8\nRampelberg Britt\nL\n*\n*\n*\n*\n0\n0\n0\n0\n22\n1\n41%\n18%\n0\n0\n0\n0\n-\n-\n0\n16\n2\n11\nShields Shannon\n*\n0\n1\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n2\n1\n12\nMartin Ava\n*\n*\n0\n2\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n13\nEdmond Leah\n2\n3\n2\n3\n12\n15\n2\n1\n39\n0\n49%\n26%\n37\n0\n3\n10\n27%\n.189\n1\n10\n1\n15\nJones Aiko\n4\n5\n4\n5\n22\n11\n4\n1\n0\n0\n-\n-\n45\n3\n5\n20\n44%\n.267\n1\n7\n2\n20\nIsringhausen Madolyn\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n23\nMcKissock Elli\n*\n*\n0\n3\n1\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n24\nDixon Anna\n*\n0\n0\n0\n0\n0\n0\n-\n-\n5\n1\n1\n0\n0%\n-.400\n0\n0\n0\n25\nMoore Jackie\n6\n1\n6\n1\n6\n11\n1\n0\n1\n0\n0%\n0%\n14\n1\n1\n6\n43%\n.286\n0\n1\n0\n27\nAwoleye Phoebe\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n44\nMendelson Maggie\n3\n4\n3\n4\n11\n12\n3\n0\n0\n0\n-\n-\n22\n1\n1\n9\n41%\n.318\n2\n1\n1\n73\nMosser jennifer\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n74\nAndrew Alicia\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\nT\nTotal\n63\n89\n13\n2\n81\n2\n48%\n22%\n159\n10\n11\n56\n35%\n.220\n5\n64\n54\nSTATS DELIVERED BY\nIndy Ignite\nTotal\nSet 1\nSet 2\nSet 3\nSet 4\nNo\nName and surname\nS1\nS2\nS3\nS4\nS5\nPoints\nTotal\nServe\nTotal\nError\nAce\nReception\nTotal\nError\nPos%\nPerf%\nAttacks\nTotal\nError\nBlk\nKill\nKill%\nEff%\nBlock\nBLK\nOther\nDig\nAssist\n1\nKeene Jaelyn\n6\n5\n7\n7\n1\n0\n0\n0\n-\n-\n9\n0\n0\n6\n67%\n.667\n1\n2\n0\n2\nHalter Emma\nL\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n4\nBush Emoni\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n7\nMember-Meneh Leketor\n1\n1\n2\n1\n12\n13\n2\n0\n33\n0\n45%\n36%\n35\n2\n1\n12\n34%\n.257\n0\n11\n0\n8\nHannah Camryn\n3\n3\n4\n3\n13\n14\n3\n2\n0\n0\n-\n-\n31\n2\n2\n10\n32%\n.194\n1\n6\n1\n9\nScott Elena\nL\n*\n*\n*\n*\n0\n0\n0\n0\n8\n1\n38%\n12%\n0\n0\n0\n0\n-\n-\n0\n16\n0\n11\nHavili Ainise\n6\n6\n0\n4\n1\n0\n0\n0\n-\n-\n3\n0\n0\n0\n0%\n.000\n0\n6\n17\n12\nLandfair Taylor\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n13\nCresse Cara\n5\n5\n4\n6\n0\n0\n0\n0\n-\n-\n5\n0\n0\n4\n80%\n.800\n0\n2\n0\n14\nDeBeer Anna\n4\n4\n5\n6\n7\n2\n0\n16\n0\n56%\n25%\n17\n3\n0\n4\n24%\n.059\n2\n5\n0\n19\nTealer Azhani\n*\n*\n2\n2\n0\n0\n0\n0\n-\n-\n6\n1\n0\n1\n17%\n.000\n1\n1\n0\n22\nMartyn Lydia\n2\n2\n3\n2\n19\n15\n1\n0\n1\n0\n0%\n0%\n26\n2\n1\n14\n54%\n.423\n5\n4\n2\n23\nLund Kayla\n*\n*\n*\n4\n5\n15\n1\n0\n18\n1\n50%\n28%\n8\n1\n1\n4\n50%\n.250\n1\n11\n1\n26\nClothier Emma\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n28\nBotezat Alexandra\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n91\nTuaniga Mia\n*\n1\n6\n2\n10\n1\n0\n0\n0\n-\n-\n5\n1\n0\n2\n40%\n.200\n0\n6\n32\nT\nTotal\n70\n93\n12\n2\n76\n2\n47%\n28%\n145\n12\n5\n57\n39%\n.276\n11\n70\n53\nSTATS DELIVERED BY"
+      }
+    ],
+    "scrapedAt": "2026-05-09T01:11:54.704Z"
+  },
+  {
+    "slug": "columbus-fury-at-indy-ignite-3",
+    "scheduleEvent": {
+      "id": 515,
+      "title": "Columbus Fury at Indy Ignite",
+      "start_datetime": "2026-05-01T23:00:00.000000Z",
+      "end_datetime": "2026-05-02T03:00:00.000000Z",
+      "timezone": null,
+      "location": "Fishers Event Center",
+      "tba": "non_tba",
+      "status": "completed",
+      "status_text": null,
+      "game_result": "win",
+      "result_text": "IND, 3-2",
+      "display_on_calendar": true,
+      "stage": null,
+      "venue_type": "home",
+      "first_team_id": 11,
+      "first_team_name": "Indy Ignite",
+      "first_team_logo_id": 12588,
+      "first_team_score": 3,
+      "second_team_id": 3,
+      "second_team_name": "Columbus Fury",
+      "second_team_logo_id": 12585,
+      "second_team_score": 2,
+      "season_id": 36,
+      "image_id": null,
+      "schedule_id": 74,
+      "tournament_id": null,
+      "tournament_group_id": null,
+      "tournament_round_id": null,
+      "presented_by": null,
+      "presented_by_url": "https://open.samsungtvplus.com/",
+      "presented_by_logo_id": 14782,
+      "mobile_presented_by_logo_id": null,
+      "volley_station_match_id": 2256705
+    },
+    "iframeStats": [
+      {
+        "type": "match-result",
+        "tables": [],
+        "bodyText": "Indy Ignite\n25\n20\n18\n25\n15\n3\nColumbus Fury\n22\n25\n25\n18\n13\n2"
+      },
+      {
+        "type": "team-stats",
+        "tables": [],
+        "bodyText": "Indy Ignite\nTotal\nSet 1\nSet 2\nSet 3\nSet 4\nSet 5\nNo\nName and surname\nS1\nS2\nS3\nS4\nS5\nPoints\nTotal\nServe\nTotal\nError\nAce\nReception\nTotal\nError\nPos%\nPerf%\nAttacks\nTotal\nError\nBlk\nKill\nKill%\nEff%\nBlock\nBLK\nOther\nDig\nAssist\n1\nKeene Jaelyn\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n2\nHalter Emma\nL\n*\n*\n*\n*\n*\n0\n0\n0\n0\n17\n0\n76%\n53%\n0\n0\n0\n0\n-\n-\n0\n20\n5\n4\nBush Emoni\n4\n4\n4\n5\n5\n24\n18\n0\n2\n28\n4\n28%\n21%\n55\n5\n1\n20\n36%\n.255\n2\n4\n1\n7\nMember-Meneh Leketor\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n8\nHannah Camryn\n3\n3\n3\n4\n4\n10\n23\n1\n0\n0\n0\n-\n-\n28\n1\n0\n10\n36%\n.321\n0\n11\n0\n9\nScott Elena\n*\n*\n*\n0\n0\n0\n0\n5\n1\n60%\n20%\n0\n0\n0\n0\n-\n-\n0\n0\n0\n11\nHavili Ainise\n6\n6\n6\n1\n1\n2\n17\n1\n0\n1\n0\n0%\n0%\n4\n0\n0\n2\n50%\n.500\n0\n15\n49\n12\nLandfair Taylor\n1\n1\n1\n2\n2\n15\n17\n2\n1\n34\n0\n50%\n18%\n40\n4\n6\n13\n33%\n.075\n1\n4\n0\n13\nCresse Cara\n5\n5\n5\n6\n6\n12\n11\n2\n1\n1\n0\n0%\n0%\n20\n3\n0\n10\n50%\n.350\n1\n2\n0\n14\nDeBeer Anna\n*\n*\n*\n*\n1\n2\n0\n0\n4\n0\n50%\n25%\n1\n0\n0\n1\n100%\n1.000\n0\n1\n1\n19\nTealer Azhani\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n22\nMartyn Lydia\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n23\nLund Kayla\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n26\nClothier Emma\n2\n2\n3\n6\n2\n1\n1\n0\n0%\n0%\n3\n0\n0\n2\n67%\n.667\n0\n0\n0\n28\nBotezat Alexandra\n*\n2\n3\n3\n7\n8\n2\n1\n0\n0\n-\n-\n9\n0\n0\n4\n44%\n.444\n2\n0\n0\n91\nTuaniga Mia\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\nT\nTotal\n74\n102\n10\n6\n91\n5\n47%\n25%\n160\n13\n7\n62\n39%\n.263\n6\n57\n56\nSTATS DELIVERED BY\nColumbus Fury\nTotal\nSet 1\nSet 2\nSet 3\nSet 4\nSet 5\nNo\nName and surname\nS1\nS2\nS3\nS4\nS5\nPoints\nTotal\nServe\nTotal\nError\nAce\nReception\nTotal\nError\nPos%\nPerf%\nAttacks\nTotal\nError\nBlk\nKill\nKill%\nEff%\nBlock\nBLK\nOther\nDig\nAssist\n1\nJones Rainelle\n*\n6\n1\n3\n9\n10\n2\n0\n1\n0\n0%\n0%\n11\n1\n0\n6\n55%\n.455\n3\n5\n0\n2\nWinterhoff Maya\n2\n3\n4\n7\n12\n1\n0\n0\n0\n-\n-\n12\n1\n0\n6\n50%\n.417\n1\n1\n1\n3\nAnderson Akasha\n1\n2\n3\n2\n9\n8\n2\n0\n30\n3\n30%\n7%\n32\n3\n1\n9\n28%\n.156\n0\n4\n0\n4\nWhite Ryan\nL\n*\n*\n0\n0\n0\n0\n7\n2\n28%\n28%\n0\n0\n0\n0\n-\n-\n0\n11\n1\n7\nHodge Jaelyn\n6\n3\n4\n5\n4\n14\n12\n3\n0\n0\n0\n-\n-\n28\n4\n1\n14\n50%\n.321\n0\n10\n3\n8\nHiapo Kamaile\nL\n*\n*\n*\n0\n0\n0\n0\n13\n1\n85%\n54%\n0\n0\n0\n0\n-\n-\n0\n7\n2\n10\nGomez Rachel\n*\n1\n0\n0\n0\n0\n0\n-\n-\n3\n0\n1\n1\n33%\n.000\n0\n0\n0\n11\nPak Audrey\n3\n*\n2\n8\n0\n1\n0\n0\n-\n-\n1\n0\n0\n1\n100%\n1.000\n0\n3\n12\n13\nEvans Ashley\n*\n6\n1\n2\n1\n8\n18\n1\n2\n0\n0\n-\n-\n9\n0\n0\n5\n56%\n.556\n1\n11\n39\n14\nFord Brianna\n*\n*\n*\n3\n2\n1\n0\n1\n0\n100%\n0%\n4\n0\n0\n3\n75%\n.750\n0\n1\n0\n16\nTerry Raina\n4\n2\n3\n1\n0\n9\n0\n22%\n0%\n12\n1\n1\n2\n17%\n.000\n0\n1\n0\n17\nLush Megan\n1\n4\n5\n6\n5\n15\n20\n2\n2\n30\n0\n63%\n50%\n25\n1\n1\n12\n48%\n.400\n1\n11\n2\n21\nPittman-Nelson Regan\n2\n5\n4\n4\n0\n0\n0\n0\n-\n-\n9\n0\n1\n4\n44%\n.333\n0\n2\n0\n22\nWilliams Kashauna\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n24\nWalker Abby\n5\n6\n3\n7\n0\n0\n0\n0\n-\n-\n6\n1\n0\n2\n33%\n.167\n1\n0\n1\nT\nTotal\n77\n104\n13\n5\n91\n6\n48%\n28%\n152\n12\n6\n65\n43%\n.309\n7\n67\n61\nSTATS DELIVERED BY"
+      }
+    ],
+    "scrapedAt": "2026-05-09T01:12:32.306Z"
+  },
+  {
+    "slug": "san-diego-mojo-at-indy-ignite-3",
+    "scheduleEvent": {
+      "id": 517,
+      "title": "San Diego Mojo at Indy Ignite",
+      "start_datetime": "2026-05-03T19:00:00.000000Z",
+      "end_datetime": "2026-05-03T23:00:00.000000Z",
+      "timezone": null,
+      "location": "Fishers Event Center",
+      "tba": "non_tba",
+      "status": "completed",
+      "status_text": null,
+      "game_result": "win",
+      "result_text": "IND, 3-1",
+      "display_on_calendar": true,
+      "stage": null,
+      "venue_type": "home",
+      "first_team_id": 11,
+      "first_team_name": "Indy Ignite",
+      "first_team_logo_id": 12588,
+      "first_team_score": 3,
+      "second_team_id": 8,
+      "second_team_name": "San Diego Mojo",
+      "second_team_logo_id": 12590,
+      "second_team_score": 1,
+      "season_id": 36,
+      "image_id": null,
+      "schedule_id": 74,
+      "tournament_id": null,
+      "tournament_group_id": null,
+      "tournament_round_id": null,
+      "presented_by": null,
+      "presented_by_url": "https://scrippssportsnetwork.com/",
+      "presented_by_logo_id": 16403,
+      "mobile_presented_by_logo_id": null,
+      "volley_station_match_id": 2256708
+    },
+    "iframeStats": [
+      {
+        "type": "match-result",
+        "tables": [],
+        "bodyText": "San Diego Mojo\n25\n13\n28\n17\n1\nIndy Ignite\n22\n25\n30\n25\n3"
+      },
+      {
+        "type": "team-stats",
+        "tables": [],
+        "bodyText": "Indy Ignite\nTotal\nSet 1\nSet 2\nSet 3\nSet 4\nNo\nName and surname\nS1\nS2\nS3\nS4\nS5\nPoints\nTotal\nServe\nTotal\nError\nAce\nReception\nTotal\nError\nPos%\nPerf%\nAttacks\nTotal\nError\nBlk\nKill\nKill%\nEff%\nBlock\nBLK\nOther\nDig\nAssist\n1\nKeene Jaelyn\n4\n6\n6\n6\n14\n10\n1\n2\n1\n0\n0%\n0%\n24\n1\n0\n11\n46%\n.417\n1\n1\n0\n2\nHalter Emma\n*\n*\n0\n3\n0\n0\n2\n0\n100%\n0%\n0\n0\n0\n0\n-\n-\n0\n1\n0\n4\nBush Emoni\n*\n*\n2\n4\n0\n0\n0\n0\n-\n-\n2\n0\n0\n1\n50%\n.500\n1\n0\n0\n7\nMember-Meneh Leketor\n6\n2\n2\n2\n15\n16\n4\n2\n23\n4\n30%\n13%\n35\n5\n3\n13\n37%\n.143\n0\n13\n3\n8\nHannah Camryn\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n9\nScott Elena\nL\n*\n*\n*\n*\n0\n0\n0\n0\n10\n0\n80%\n40%\n0\n0\n0\n0\n-\n-\n0\n16\n11\n11\nHavili Ainise\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n12\nLandfair Taylor\n*\n0\n1\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n13\nCresse Cara\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n14\nDeBeer Anna\n3\n5\n5\n5\n16\n16\n2\n1\n30\n1\n47%\n23%\n32\n3\n4\n14\n44%\n.219\n1\n10\n0\n19\nTealer Azhani\n2\n4\n4\n4\n20\n20\n3\n2\n0\n0\n-\n-\n34\n1\n2\n18\n53%\n.441\n0\n7\n1\n22\nMartyn Lydia\n1\n3\n3\n3\n8\n10\n0\n0\n0\n0\n-\n-\n16\n0\n1\n5\n31%\n.250\n3\n2\n0\n23\nLund Kayla\n*\n*\n*\n0\n3\n1\n0\n5\n1\n80%\n20%\n0\n0\n0\n0\n-\n-\n0\n2\n0\n26\nClothier Emma\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n28\nBotezat Alexandra\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n91\nTuaniga Mia\n5\n1\n1\n1\n4\n18\n1\n1\n1\n0\n0%\n0%\n6\n0\n0\n3\n50%\n.500\n0\n14\n49\nT\nTotal\n79\n101\n12\n8\n72\n6\n49%\n21%\n149\n10\n10\n65\n44%\n.302\n6\n66\n64\nSTATS DELIVERED BY\nSan Diego Mojo\nTotal\nSet 1\nSet 2\nSet 3\nSet 4\nNo\nName and surname\nS1\nS2\nS3\nS4\nS5\nPoints\nTotal\nServe\nTotal\nError\nAce\nReception\nTotal\nError\nPos%\nPerf%\nAttacks\nTotal\nError\nBlk\nKill\nKill%\nEff%\nBlock\nBLK\nOther\nDig\nAssist\n2\nVenegas Shara\nL\n*\n*\n*\n*\n0\n0\n0\n0\n12\n1\n42%\n8%\n0\n0\n0\n0\n-\n-\n0\n12\n3\n4\nJacobs Allison\n*\n6\n1\n7\n8\n3\n0\n22\n2\n64%\n27%\n21\n3\n0\n7\n33%\n.190\n0\n8\n0\n5\nCaffey Kayla\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n6\nBrakocevic Jovana\n3\n4\n2\n3\n15\n11\n5\n1\n0\n0\n-\n-\n28\n2\n1\n9\n32%\n.214\n5\n5\n0\n9\nLoberg Grace\n4\n5\n3\n4\n11\n14\n1\n0\n35\n3\n28%\n0%\n28\n1\n1\n10\n36%\n.286\n1\n6\n0\n10\nSandbothe Taylor\n2\n3\n1\n2\n10\n23\n2\n4\n1\n1\n0%\n0%\n19\n1\n0\n5\n26%\n.211\n1\n3\n1\n11\nLewis Morgan\n*\n1\n0\n0\n0\n0\n0\n-\n-\n2\n0\n0\n1\n50%\n.500\n0\n0\n0\n12\nGrote Marin\n5\n6\n4\n5\n8\n9\n1\n0\n2\n0\n50%\n0%\n17\n0\n2\n6\n35%\n.235\n2\n3\n0\n14\nVicini McKenna\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n16\nWatson Karis\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n17\nGeorgiades Mary Kate\nL\n0\n0\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n21\nMonserez Marlie\n6\n1\n5\n6\n5\n11\n0\n1\n0\n0\n-\n-\n7\n0\n0\n3\n43%\n.429\n1\n10\n35\n22\nScully Shannon\n*\n0\n0\n0\n0\n0\n0\n-\n-\n1\n0\n1\n0\n0%\n-1.000\n0\n0\n0\n31\nTabron Maya\n1\n2\n1\n6\n0\n0\n17\n1\n18%\n12%\n8\n1\n1\n1\n12%\n-.125\n0\n3\n0\n33\nKubik Hayden\n*\n0\n1\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n0\n44\nGraham Carly\n*\n0\n1\n0\n0\n0\n0\n-\n-\n0\n0\n0\n0\n-\n-\n0\n0\n1\nT\nTotal\n58\n84\n12\n6\n89\n8\n37%\n10%\n131\n8\n6\n42\n32%\n.214\n10\n50\n40\nSTATS DELIVERED BY"
+      }
+    ],
+    "scrapedAt": "2026-05-09T01:12:57.732Z"
+  }
+]
